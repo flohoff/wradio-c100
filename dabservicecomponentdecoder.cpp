@@ -18,25 +18,25 @@
  *
  */
 
-#ifndef DABUSBTUNERINPUT_H
-#define DABUSBTUNERINPUT_H
+#include "dabservicecomponentdecoder.h"
 
-#include "dabinput.h"
-#include "jdabservice.h"
+DabServiceComponentDecoder::DabServiceComponentDecoder() {
 
-#include <memory>
-#include <string>
+}
 
-class DabUsbTunerInput : public DabInput {
+DabServiceComponentDecoder::~DabServiceComponentDecoder() {
 
-public:
-    virtual void startService(std::shared_ptr<JDabService> serviceLink) = 0;
-    virtual void stopService(const DabService& service) = 0;
+}
 
-    virtual void startServiceScan() = 0;
-    virtual void stopServiceScan() = 0;
-    virtual void stopAllRunningServices() = 0;
+void DabServiceComponentDecoder::flushBufferedData() {
 
-    virtual std::string getDeviceName() const = 0;
-};
-#endif //DABUSBTUNERINPUT_H
+}
+
+void DabServiceComponentDecoder::setSubchannelBitrate(uint16_t bitrate) {
+    m_subChanBitrate = bitrate;
+    m_frameSize = m_subChanBitrate*3;
+}
+
+std::shared_ptr<DabServiceComponentDecoder::Component_Data_Callback> DabServiceComponentDecoder::registerComponentDataCallback(DabServiceComponentDecoder::Component_Data_Callback cb) {
+    return m_componentDataDispatcher.add(cb);
+}

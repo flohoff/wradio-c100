@@ -18,25 +18,28 @@
  *
  */
 
-#ifndef DABUSBTUNERINPUT_H
-#define DABUSBTUNERINPUT_H
+#ifndef FIG_00_EXT_04_H
+#define FIG_00_EXT_04_H
 
-#include "dabinput.h"
-#include "jdabservice.h"
+#include "fig_00.h"
 
-#include <memory>
-#include <string>
-
-class DabUsbTunerInput : public DabInput {
+/*
+ * ETS 300 401 clause 6.3.3 Service component with Conditional Access in stream mode or FIC
+ *
+ * The Extension 4 of FIG type 0 (FIG 0/4) gives additional information about the service component description for
+ * components with CA and carried in Stream mode.
+ */
+class Fig_00_Ext_04 : public Fig_00 {
 
 public:
-    virtual void startService(std::shared_ptr<JDabService> serviceLink) = 0;
-    virtual void stopService(const DabService& service) = 0;
+    explicit Fig_00_Ext_04(const std::vector<uint8_t>& figData);
+    virtual ~Fig_00_Ext_04();
 
-    virtual void startServiceScan() = 0;
-    virtual void stopServiceScan() = 0;
-    virtual void stopAllRunningServices() = 0;
+private:
+    void parseFigData(const std::vector<uint8_t>& figData);
 
-    virtual std::string getDeviceName() const = 0;
+private:
+    const std::string m_logTag = {"[Fig_00_Ext_04]"};
 };
-#endif //DABUSBTUNERINPUT_H
+
+#endif // FIG_00_EXT_04_H

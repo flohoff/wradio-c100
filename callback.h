@@ -18,25 +18,20 @@
  *
  */
 
-#ifndef DABUSBTUNERINPUT_H
-#define DABUSBTUNERINPUT_H
+#ifndef CALLBACK_H
+#define CALLBACK_H
 
-#include "dabinput.h"
-#include "jdabservice.h"
+#include <vector>
 
-#include <memory>
-#include <string>
-
-class DabUsbTunerInput : public DabInput {
+class Callback {
 
 public:
-    virtual void startService(std::shared_ptr<JDabService> serviceLink) = 0;
-    virtual void stopService(const DabService& service) = 0;
+    explicit Callback() = default;
+    Callback(Callback&&) = default;
+    Callback& operator=(Callback&&) = default;
+    virtual ~Callback() = default;
 
-    virtual void startServiceScan() = 0;
-    virtual void stopServiceScan() = 0;
-    virtual void stopAllRunningServices() = 0;
-
-    virtual std::string getDeviceName() const = 0;
+    virtual void call(const std::vector<uint8_t>& data) = 0;
 };
-#endif //DABUSBTUNERINPUT_H
+
+#endif // CALLBACK_H

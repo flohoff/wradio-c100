@@ -18,25 +18,22 @@
  *
  */
 
-#ifndef DABUSBTUNERINPUT_H
-#define DABUSBTUNERINPUT_H
+#include "fig_00_ext_04.h"
 
-#include "dabinput.h"
-#include "jdabservice.h"
+Fig_00_Ext_04::Fig_00_Ext_04(const std::vector<uint8_t> &figData) : Fig_00(figData) {
+    parseFigData(figData);
+}
 
-#include <memory>
-#include <string>
+Fig_00_Ext_04::~Fig_00_Ext_04() {
 
-class DabUsbTunerInput : public DabInput {
+}
 
-public:
-    virtual void startService(std::shared_ptr<JDabService> serviceLink) = 0;
-    virtual void stopService(const DabService& service) = 0;
-
-    virtual void startServiceScan() = 0;
-    virtual void stopServiceScan() = 0;
-    virtual void stopAllRunningServices() = 0;
-
-    virtual std::string getDeviceName() const = 0;
-};
-#endif //DABUSBTUNERINPUT_H
+void Fig_00_Ext_04::parseFigData(const std::vector<uint8_t> &figData) {
+    auto figIter = figData.cbegin() +1;
+    while(figIter < figData.cend()) {
+        bool rfa = ((*figIter & 0x80) >> 7) & 0xFF;
+        bool rfu = ((*figIter & 0x40) >> 6) & 0xFF;
+        uint8_t subChId = (*figIter++ & 0x3F) & 0xFF;
+        uint16_t caOrg = (*figIter++ & 0xFF) << 8 | (*figIter++ & 0xFF);
+    }
+}

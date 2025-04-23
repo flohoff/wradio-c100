@@ -22,9 +22,13 @@
 #define RAONTUNERINPUT_H
 
 #include "dabusbtunerinput.h"
-#include "jtunerusbdevice.h"
+//FLO#include "jtunerusbdevice.h"
 #include "jdabservice.h"
-#include "../../concurrent_queue.h"
+#include "dabensemble.h"
+#include "concurrent_queue.h"
+#include "usb.hpp"
+#include "dabinput.h"
+#include "dabservice.h"
 
 #include <memory>
 #include <array>
@@ -32,7 +36,7 @@
 class RaonTunerInput final : public DabUsbTunerInput, DabEnsemble {
 
 public:
-    explicit RaonTunerInput(std::shared_ptr<JTunerUsbDevice> usbDevice);
+    explicit RaonTunerInput(std::shared_ptr<USB::Device> usbDevice);
     virtual ~RaonTunerInput();
 
     //delete copy and assignment constructors
@@ -66,7 +70,7 @@ private:
 
     uint32_t m_currentFrequency{0};
 
-    std::shared_ptr<JTunerUsbDevice> m_usbDevice{nullptr};
+    std::shared_ptr<USB::Device> m_usbDevice{nullptr};
     bool m_isInitialized{false};
 
     bool m_isScanning{false};
@@ -268,7 +272,7 @@ private:
     static constexpr uint8_t RTV_DAB_CHANNEL_LOCK_OK    = (RTV_DAB_OFDM_LOCK_MASK|RTV_DAB_FEC_LOCK_MASK);
 
     static constexpr uint8_t DAB_MAX_NUM_ANTENNA_LEVEL  = 0x07;
-    static constexpr uint_t  AntLvlTbl[DAB_MAX_NUM_ANTENNA_LEVEL] {
+    static constexpr uint32_t  AntLvlTbl[DAB_MAX_NUM_ANTENNA_LEVEL] {
             810,
             700,
             490,

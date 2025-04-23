@@ -18,25 +18,20 @@
  *
  */
 
-#ifndef DABUSBTUNERINPUT_H
-#define DABUSBTUNERINPUT_H
+#ifndef DABMOTUSERAPPLICATIONDECODER_H
+#define DABMOTUSERAPPLICATIONDECODER_H
 
-#include "dabinput.h"
-#include "jdabservice.h"
+#include "dabuserapplicationdecoder.h"
+#include "datatypes.h"
 
-#include <memory>
-#include <string>
-
-class DabUsbTunerInput : public DabInput {
+class DabMotUserapplicationDecoder : public DabUserapplicationDecoder {
 
 public:
-    virtual void startService(std::shared_ptr<JDabService> serviceLink) = 0;
-    virtual void stopService(const DabService& service) = 0;
+    explicit DabMotUserapplicationDecoder();
+    virtual ~DabMotUserapplicationDecoder();
 
-    virtual void startServiceScan() = 0;
-    virtual void stopServiceScan() = 0;
-    virtual void stopAllRunningServices() = 0;
-
-    virtual std::string getDeviceName() const = 0;
+    virtual void motApplicationDataInput(const MOT_Data& motData) = 0;
 };
-#endif //DABUSBTUNERINPUT_H
+
+
+#endif //DABMOTUSERAPPLICATIONDECODER_H

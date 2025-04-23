@@ -18,25 +18,12 @@
  *
  */
 
-#ifndef DABUSBTUNERINPUT_H
-#define DABUSBTUNERINPUT_H
+#include "dabuserapplicationdecoder.h"
 
-#include "dabinput.h"
-#include "jdabservice.h"
+DabUserapplicationDecoder::DabUserapplicationDecoder() {
 
-#include <memory>
-#include <string>
+}
 
-class DabUsbTunerInput : public DabInput {
+DabUserapplicationDecoder::~DabUserapplicationDecoder() {
 
-public:
-    virtual void startService(std::shared_ptr<JDabService> serviceLink) = 0;
-    virtual void stopService(const DabService& service) = 0;
-
-    virtual void startServiceScan() = 0;
-    virtual void stopServiceScan() = 0;
-    virtual void stopAllRunningServices() = 0;
-
-    virtual std::string getDeviceName() const = 0;
-};
-#endif //DABUSBTUNERINPUT_H
+}

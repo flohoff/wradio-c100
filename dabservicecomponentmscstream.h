@@ -18,25 +18,20 @@
  *
  */
 
-#ifndef DABUSBTUNERINPUT_H
-#define DABUSBTUNERINPUT_H
+#ifndef DABSERVICECOMPONENTMSCSTREAM_H
+#define DABSERVICECOMPONENTMSCSTREAM_H
 
-#include "dabinput.h"
-#include "jdabservice.h"
+#include "dabservicecomponent.h"
 
-#include <memory>
-#include <string>
-
-class DabUsbTunerInput : public DabInput {
+class DabServiceComponentMscStream : public DabServiceComponent {
 
 public:
-    virtual void startService(std::shared_ptr<JDabService> serviceLink) = 0;
-    virtual void stopService(const DabService& service) = 0;
+    virtual ~DabServiceComponentMscStream();
+    virtual void flushBufferedData();
 
-    virtual void startServiceScan() = 0;
-    virtual void stopServiceScan() = 0;
-    virtual void stopAllRunningServices() = 0;
+protected:
+    explicit DabServiceComponentMscStream();
 
-    virtual std::string getDeviceName() const = 0;
 };
-#endif //DABUSBTUNERINPUT_H
+
+#endif // DABSERVICECOMPONENTMSCSTREAM_H
