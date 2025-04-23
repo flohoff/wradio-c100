@@ -1156,15 +1156,17 @@ void RaonTunerInput::readMsc() {
     bool msc0Int = (int_type_val1 & MSC0_E_INT) >> 1;
     bool ficInt = (int_type_val1 & FIC_E_INT);
 
-    //std::cout << LOG_TAG << "STATL OFDM: " << std::boolalpha << ofdmLock << \
-                            " MSC1_O: " << msc1Overrun << \
-                            " MSC1_U: " << msc1Underrun << \
-                            " MSC1_I: " << msc1Int << \
-                            " MSC0_O: " << msc0Overrun << \
-                            " MSC0_U: " << msc0Underrun << \
-                            " MSC0_I: " << msc0Int << \
-                            " FIC0_I: " << ficInt << \
+#if 0
+    std::cout << LOG_TAG << "STATL OFDM: " << std::boolalpha << ofdmLock <<
+                            " MSC1_O: " << msc1Overrun <<
+                            " MSC1_U: " << msc1Underrun <<
+                            " MSC1_I: " << msc1Int <<
+                            " MSC0_O: " << msc0Overrun <<
+                            " MSC0_U: " << msc0Underrun <<
+                            " MSC0_I: " << msc0Int <<
+                            " FIC0_I: " << ficInt <<
                             std::noboolalpha << std::endl;
+#endif
 
     uint8_t int_type_val2 = readRegister(INT_E_STATH);
     bool ofdmNis = static_cast<bool>((int_type_val2 & 0x80) >> 7);
@@ -1176,16 +1178,17 @@ void RaonTunerInput::readMsc() {
     bool fecCifEnd = static_cast<bool>((int_type_val2 & 0x02) >> 1);
     bool fecSoftreset = static_cast<bool>((int_type_val2 & 0x01));
 
-    //std::cout << LOG_TAG << "STATH OFDMNis: " << std::boolalpha << ofdmNis << \
-              " OFDMTii: " << ofdmTii << \
-              " OFDMScan: " << ofdmScan << \
-              " OFDMWinPos: " << ofdmWindowPos << \
-              " OFDMUnlock: " << ofdmUnlock << \
-              " FECReconfig: " << fecReconfig << \
-              " FecCifEnd: " << fecCifEnd << \
-              " FecSoftReset: " << fecSoftreset << \
+#if 0
+    std::cout << LOG_TAG << "STATH OFDMNis: " << std::boolalpha << ofdmNis <<
+              " OFDMTii: " << ofdmTii <<
+              " OFDMScan: " << ofdmScan <<
+              " OFDMWinPos: " << ofdmWindowPos <<
+              " OFDMUnlock: " << ofdmUnlock <<
+              " FECReconfig: " << fecReconfig <<
+              " FecCifEnd: " << fecCifEnd <<
+              " FecSoftReset: " << fecSoftreset <<
               std::noboolalpha << std::endl;
-
+#endif
 
     if(msc1Overrun || msc1Underrun) {
         std::cout << LOG_TAG << "Clearing MSC memory for OverUnderRun" << std::endl;
@@ -1363,15 +1366,17 @@ void RaonTunerInput::readData() {
     bool fecCifEnd = static_cast<bool>((int_type_val2 & 0x02) >> 1);
     bool fecSoftreset = static_cast<bool>((int_type_val2 & 0x01));
 
-    //std::cout << LOG_TAG << "STATH OFDMNis: " << std::boolalpha << ofdmNis << \
-              " OFDMTii: " << ofdmTii << \
-              " OFDMScan: " << ofdmScan << \
-              " OFDMWinPos: " << ofdmWindowPos << \
-              " OFDMUnlock: " << ofdmUnlock << \
-              " FECReconfig: " << fecReconfig << \
-              " FecCifEnd: " << fecCifEnd << \
-              " FecSoftReset: " << fecSoftreset << \
+#if 0
+    std::cout << LOG_TAG << "STATH OFDMNis: " << std::boolalpha << ofdmNis <<
+              " OFDMTii: " << ofdmTii <<
+              " OFDMScan: " << ofdmScan <<
+              " OFDMWinPos: " << ofdmWindowPos <<
+              " OFDMUnlock: " << ofdmUnlock <<
+              " FECReconfig: " << fecReconfig <<
+              " FecCifEnd: " << fecCifEnd <<
+              " FecSoftReset: " << fecSoftreset <<
               std::noboolalpha << std::endl;
+#endif
 
     if(ficInt) {
         switchPage(REGISTER_PAGE_FIC);
