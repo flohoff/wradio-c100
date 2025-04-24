@@ -314,7 +314,7 @@ private:
     void openSubChannel(uint8_t subchanId);
     void closeSubchannel(uint8_t subchanId);
 
-    void readFic();
+    void onScanReadFic();
     void readMsc();
 
     void readData();

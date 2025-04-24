@@ -351,7 +351,7 @@ std::string RaonTunerInput::getDeviceName() const {
 void RaonTunerInput::threadedFicRead() {
 
     do {
-        readFic();
+        onScanReadFic();
     } while(m_readFicThreadRunning);
 }
 
@@ -1089,7 +1089,7 @@ void RaonTunerInput::closeSubchannel(uint8_t subchanId) {
 #endif
 }
 
-void RaonTunerInput::readFic() {
+void RaonTunerInput::onScanReadFic() {
 	std::cout << LOG_TAG << "readFic()" << std::endl;
 	uint8_t lockStatus = getLockStatus();
 
@@ -1141,9 +1141,7 @@ void RaonTunerInput::stopReadFicThread() {
     if(m_readFicThreadRunning) {
         m_readFicThreadRunning = false;
         if(m_readFicThread.joinable()) {
-            std::cout << LOG_TAG << "Joining FIC thread..." << std::endl;
             m_readFicThread.join();
-            std::cout << LOG_TAG << "Joining FIC thread done" << std::endl;
         }
     }
 }
@@ -1162,9 +1160,7 @@ void RaonTunerInput::stopReadDataThread() {
     if(m_commandThreadRunning) {
         m_commandThreadRunning = false;
         if(m_commandThread.joinable()) {
-            std::cout << LOG_TAG << "Joining Data thread..." << std::endl;
             m_commandThread.join();
-            std::cout << LOG_TAG << "Joining Data thread done" << std::endl;
         }
     }
 }
