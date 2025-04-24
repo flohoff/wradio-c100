@@ -30,16 +30,6 @@ constexpr int RaonTunerInput::g_atPllNF_DAB_BAND3[];
 constexpr uint32_t RaonTunerInput::AntLvlTbl[DAB_MAX_NUM_ANTENNA_LEVEL];
 
 RaonTunerInput::RaonTunerInput(std::shared_ptr<USB::Device> usbDevice) : m_usbDevice{usbDevice} {
-    std::cout << LOG_TAG << "Constructing...." << std::endl;
-#if 0
-    m_usbDevice->requestPermission([&](bool granted) {
-        std::cout << LOG_TAG << (m_usbDevice != nullptr ? (m_usbDevice.get()->getDeviceName()) : "NULL") << " PermissionCallback: " << granted << std::endl;
-        if(granted) {
-            m_commandQueue.push(std::bind(&RaonTunerInput::initializeSync, this));
-            startReadDataThread();
-        }
-    });
-#endif
     m_commandQueue.push(std::bind(&RaonTunerInput::initializeSync, this));
     startReadDataThread();
 
@@ -1197,7 +1187,6 @@ void RaonTunerInput::readMscData() {
 		std::cout << LOG_TAG << "StartServiceLink is null ( less than 4 bytes header )" << std::endl;
 	}
 
-	//clear buffer
 	switchPage(REGISTER_PAGE_DD);
 	setRegister(INT_E_UCLRL, 0x04);
 }
