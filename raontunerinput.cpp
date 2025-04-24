@@ -365,13 +365,6 @@ void RaonTunerInput::threadedFicRead() {
     } while(m_readFicThreadRunning);
 }
 
-void RaonTunerInput::threadedMscRead() {
-
-    do {
-        readMsc();
-    } while(m_readMscThreadRunning);
-}
-
 void RaonTunerInput::threadedDataRead() {
     do {
         readData();
@@ -972,29 +965,22 @@ void RaonTunerInput::rtvRFInitilize() {
 }
 
 void RaonTunerInput::rtvRfSpecial() {
-    std::vector<uint8_t> readReq = {0x10, 0x00, 0x00, 0x01};
-    //FLOint bytesTransfered = m_usbDevice->writeBulkTransferData(RAON_ENDPOINT_OUT, readReq);
-    int bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, readReq, 100);
+	std::vector<uint8_t> readReq = {0x10, 0x00, 0x00, 0x01};
+	int bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, readReq, 100);
 
-    std::vector<uint8_t> readReqBuf(4);
-    //FLObytesTransfered = m_usbDevice->readBulkTransferData(RAON_ENDPOINT_IN, readReqBuf);
-    bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, readReqBuf, 100);
+	std::vector<uint8_t> readReqBuf(4);
+	bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, readReqBuf, 100);
 
-    readReq = {0x00, 0x00, 0x00, 0x00};
-    //FLObytesTransfered = m_usbDevice->writeBulkTransferData(RAON_ENDPOINT_OUT, readReq);
-    bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, readReq, 100);
-    //FLObytesTransfered = m_usbDevice->readBulkTransferData(RAON_ENDPOINT_IN, readReqBuf);
-    bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, readReqBuf, 100);
+	readReq = {0x00, 0x00, 0x00, 0x00};
+	bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, readReq, 100);
+	bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, readReqBuf, 100);
 
-    readReq = {0x01, 0x00, 0x00, 0x00};
-    //FLObytesTransfered = m_usbDevice->writeBulkTransferData(RAON_ENDPOINT_OUT, readReq);
-    bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, readReq, 100);
-    //FLObytesTransfered = m_usbDevice->readBulkTransferData(RAON_ENDPOINT_IN, readReqBuf);
-    bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, readReqBuf, 100);
+	readReq = {0x01, 0x00, 0x00, 0x00};
+	bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, readReq, 100);
+	bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, readReqBuf, 100);
 }
 
 void RaonTunerInput::setFrequency(uint32_t frequencyKhz) {
-
     int nNumTblEntry = 0;
 
     int freqMhz = frequencyKhz/1000;
@@ -1027,12 +1013,6 @@ void RaonTunerInput::setFrequency(uint32_t frequencyKhz) {
         uint8_t verifyByte12 = readRegister(0x12);
         uint8_t verifyByte13 = readRegister(0x13);
         uint8_t verifyByte14 = readRegister(0x14);
-        
-        if( (verifyByte15 & 0x02) == 0x02) {
-
-        } else {
-            //setRegister(0x20, 0x00);
-        }
 
         switchPage(REGISTER_PAGE_FM);
         setRegister(0x10, 0x48);
@@ -1061,24 +1041,15 @@ void RaonTunerInput::setupMemoryFIC() {
 }
 
 void RaonTunerInput::setupMscThreshold() {
-    std::cout << LOG_TAG << "Setting up MSC Threshold..." << std::endl;
+	std::cout << LOG_TAG << "Setting up MSC Threshold..." << std::endl;
 
-    switchPage(REGISTER_PAGE_DD);
+	switchPage(REGISTER_PAGE_DD);
 
-    //1536
-    //setRegister(0x56, 0x00);
-    //setRegister(0x57, 0xD8);
+	//Threshold at 0x100 byte
+	setRegister(0x56, 0x01);
+	setRegister(0x57, 0x00);
 
-    //Threshold at 1024
-    //setRegister(0x56, 0x04);
-    //setRegister(0x57, 0x00);
-
-    //Threshold at 2048
-    setRegister(0x56, 0x01);
-    setRegister(0x57, 0x00);
-
-    switchPage(REGISTER_PAGE_DD);
-
+	switchPage(REGISTER_PAGE_DD);
 }
 
 void RaonTunerInput::clearAndSetupMscMemory() {
@@ -1129,145 +1100,41 @@ void RaonTunerInput::closeSubchannel(uint8_t subchanId) {
 }
 
 void RaonTunerInput::readFic() {
-    std::cout << LOG_TAG << "readFic()" << std::endl;
-    uint8_t lockStatus = getLockStatus();
+	std::cout << LOG_TAG << "readFic()" << std::endl;
+	uint8_t lockStatus = getLockStatus();
 
-    if(lockStatus != RTV_DAB_CHANNEL_LOCK_OK) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
-        if(lockStatus == RTV_DAB_OFDM_LOCK_MASK || lockStatus == RTV_DAB_FEC_LOCK_MASK) {
-            m_maxCollectionWaitLoops += 8;
-        }
+	if(lockStatus != RTV_DAB_CHANNEL_LOCK_OK) {
+		std::this_thread::sleep_for(std::chrono::milliseconds(100));
+		if(lockStatus == RTV_DAB_OFDM_LOCK_MASK || lockStatus == RTV_DAB_FEC_LOCK_MASK) {
+			m_maxCollectionWaitLoops += 8;
+		}
 
-        m_maxCollectionWaitLoops -= 10;
-        if(m_maxCollectionWaitLoops <= 0) {
-            m_scanCommandQueue.push(std::bind(&RaonTunerInput::scanNext, this));
-        }
+		m_maxCollectionWaitLoops -= 10;
+		if(m_maxCollectionWaitLoops <= 0) {
+			m_scanCommandQueue.push(std::bind(&RaonTunerInput::scanNext, this));
+		}
 
-        std::cout << LOG_TAG << "ScanRetries: " << +m_maxCollectionWaitLoops << " LockStat: " << +lockStatus << std::endl;
-        return;
-    }
+		std::cout << LOG_TAG << "ScanRetries: " << +m_maxCollectionWaitLoops << " LockStat: " << +lockStatus << std::endl;
+		return;
+	}
 
-    switchPage(REGISTER_PAGE_FM);
+	switchPage(REGISTER_PAGE_FM);
 
-    switchPage(REGISTER_PAGE_DD);
-    uint8_t demodStat = readRegister(INT_E_STATL);
-    bool ficInt = (demodStat & FIC_E_INT);
+	switchPage(REGISTER_PAGE_DD);
+	uint8_t demodStat = readRegister(INT_E_STATL);
+	bool ficInt = (demodStat & FIC_E_INT);
 
-    if(ficInt) {
-        switchPage(REGISTER_PAGE_FIC);
+	if(ficInt) {
+		readFicData();
 
-        std::vector<uint8_t> reqFic = {0x22, 0x00, 0x80, 0x01, 0x10};
-        //FLOint bytesTransfered = m_usbDevice->writeBulkTransferData(RAON_ENDPOINT_OUT, reqFic);
-        int bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, reqFic, 100);
+		--m_ficCollectionWaitLoops;
 
-        std::vector<uint8_t> reFicRet(400);
-        //FLObytesTransfered = m_usbDevice->readBulkTransferData(RAON_ENDPOINT_IN, reFicRet);
-        bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, reFicRet, 100);
+		std::cout << LOG_TAG << "FicRetries: " << +m_ficCollectionWaitLoops << std::endl;
 
-        switchPage(REGISTER_PAGE_DD);
-        /* FIC interrupt status clear */
-        setRegister(INT_E_UCLRL, 0x01);
-
-        if(bytesTransfered >= 4) {
-            for(int i = 0; i < ((bytesTransfered - 4) / 32); i++) {
-                dataInput(std::vector<uint8_t>(reFicRet.begin()+4+i*32, reFicRet.begin()+4+i*32+32), 0x64, false);
-            }
-        }
-
-        --m_ficCollectionWaitLoops;
-        std::cout << LOG_TAG << "FicRetries: " << +m_ficCollectionWaitLoops << std::endl;
-        if(m_ficCollectionWaitLoops <= 0) {
-            m_scanCommandQueue.push(std::bind(&RaonTunerInput::scanNext, this));
-        }
-    }
-}
-
-void RaonTunerInput::readMsc() {
-    std::cout << LOG_TAG << "readMsc()" << std::endl;
-    switchPage(REGISTER_PAGE_DD);
-
-    uint8_t int_type_val1 = readRegister(INT_E_STATL);
-    bool ofdmLock = static_cast<bool>((int_type_val1 & 0x80) >> 7);
-    bool msc1Overrun = (int_type_val1 & MSC1_E_OVER_FLOW) >> 6;
-    bool msc1Underrun = (int_type_val1 & MSC1_E_UNDER_FLOW) >> 5;
-    bool msc1Int = (int_type_val1 & MSC1_E_INT) >> 4;
-    bool msc0Overrun = (int_type_val1 & MSC0_E_OVER_FLOW) >> 3;
-    bool msc0Underrun = (int_type_val1 & MSC0_E_UNDER_FLOW) >> 2;
-    bool msc0Int = (int_type_val1 & MSC0_E_INT) >> 1;
-    bool ficInt = (int_type_val1 & FIC_E_INT);
-
-#if 1
-    std::cout << LOG_TAG << "STATL OFDM: " << std::boolalpha << ofdmLock <<
-                            " MSC1_O: " << msc1Overrun <<
-                            " MSC1_U: " << msc1Underrun <<
-                            " MSC1_I: " << msc1Int <<
-                            " MSC0_O: " << msc0Overrun <<
-                            " MSC0_U: " << msc0Underrun <<
-                            " MSC0_I: " << msc0Int <<
-                            " FIC0_I: " << ficInt <<
-                            std::noboolalpha << std::endl;
-#endif
-
-    uint8_t int_type_val2 = readRegister(INT_E_STATH);
-    bool ofdmNis = static_cast<bool>((int_type_val2 & 0x80) >> 7);
-    bool ofdmTii = static_cast<bool>((int_type_val2 & 0x40) >> 6);
-    bool ofdmScan = static_cast<bool>((int_type_val2 & 0x20) >> 5);
-    bool ofdmWindowPos = static_cast<bool>((int_type_val2 & 0x10) >> 4);
-    bool ofdmUnlock = static_cast<bool>((int_type_val2 & 0x08) >> 3);
-    bool fecReconfig = static_cast<bool>((int_type_val2 & 0x04) >> 2);
-    bool fecCifEnd = static_cast<bool>((int_type_val2 & 0x02) >> 1);
-    bool fecSoftreset = static_cast<bool>((int_type_val2 & 0x01));
-
-#if 1
-    std::cout << LOG_TAG << "STATH OFDMNis: " << std::boolalpha << ofdmNis <<
-              " OFDMTii: " << ofdmTii <<
-              " OFDMScan: " << ofdmScan <<
-              " OFDMWinPos: " << ofdmWindowPos <<
-              " OFDMUnlock: " << ofdmUnlock <<
-              " FECReconfig: " << fecReconfig <<
-              " FecCifEnd: " << fecCifEnd <<
-              " FecSoftReset: " << fecSoftreset <<
-              std::noboolalpha << std::endl;
-#endif
-
-    if(msc1Overrun || msc1Underrun) {
-        std::cout << LOG_TAG << "Clearing MSC memory for OverUnderRun" << std::endl;
-
-        //ClearAndSetupMSCMemory
-        /*
-        switchPage(REGISTER_PAGE_DD);
-        setRegister(0x48, 0x00);
-        setRegister(0x48, 0x05);
-        */
-        clearAndSetupMscMemory();
-
-        setRegister(INT_E_UCLRL, 0x04);
-        return;
-    }
-
-    if(msc1Int) {
-        std::cout << LOG_TAG << "Reading MSC memory" << std::endl;
-
-        switchPage(REGISTER_PAGE_MSC1);
-
-        std::vector<uint8_t> mscReqBuf = {0x22, 0x00, 0xD8, 0x00, 0x10};
-        std::vector<uint8_t> mscRecBuff(1536);
-
-        //FLOint bytesTransfered = m_usbDevice->writeBulkTransferData(RAON_ENDPOINT_OUT, mscReqBuf);
-        int bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, mscReqBuf, 100);
-        //FLObytesTransfered = m_usbDevice->readBulkTransferData(RAON_ENDPOINT_IN, mscRecBuff);
-        bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, mscRecBuff, 100);
-
-        if(m_startServiceLink != nullptr) {
-            dataInput(std::vector<uint8_t>(mscRecBuff.begin()+4, mscRecBuff.begin()+bytesTransfered), m_currentSubchanId, false);
-        } else {
-            std::cout << LOG_TAG << "StartServiceLink is null" << std::endl;
-        }
-
-        //clear buffer
-        switchPage(REGISTER_PAGE_DD);
-        setRegister(INT_E_UCLRL, 0x04);
-    }
+		if(m_ficCollectionWaitLoops <= 0) {
+			m_scanCommandQueue.push(std::bind(&RaonTunerInput::scanNext, this));
+		}
+	}
 }
 
 void RaonTunerInput::startReadFicThread() {
@@ -1314,25 +1181,15 @@ void RaonTunerInput::stopReadDataThread() {
 
 void RaonTunerInput::readMscData() {
         std::cout << LOG_TAG << "Reading MSC memory" << std::endl;
+
 	switchPage(REGISTER_PAGE_MSC1);
 
-	//std::vector<uint8_t> mscReqBuf = {0x22, 0x00, 0xD8, 0x00, 0x10};
-	//std::vector<uint8_t> mscRecBuff(1536);
-	//std::vector<uint8_t> mscReqBuf = {0x22, 0x00, 0xFF, 0x00, 0x10};
-
-	//1024
-	//std::vector<uint8_t> mscReqBuf = {0x22, 0x04, 0x00, 0x00, 0x10};
-
-	//2048
-	//std::vector<uint8_t> mscReqBuf = {0x22, 0x00, 0x00, 0x08, 0x10};
+	/* Read 0x100 bytes */
 	std::vector<uint8_t> mscReqBuf = {0x22, 0x00, 0x00, 0x01, 0x10};
+	int bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, mscReqBuf, 100);
 
 	std::vector<uint8_t> mscRecBuff(4096);
-
-	int bytesTransfered = m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, mscReqBuf, 100);
 	bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, mscRecBuff, 100);
-
-	//std::cout << LOG_TAG << "ReadData: " << +bytesTransfered << std::endl;
 
 	if(m_startServiceLink != nullptr && bytesTransfered > 4) {
 		dataInput(std::vector<uint8_t>(mscRecBuff.begin()+4, mscRecBuff.begin()+bytesTransfered), m_currentSubchanId, false);
@@ -1382,23 +1239,23 @@ void RaonTunerInput::clearMscBuffer() {
 }
 
 void RaonTunerInput::readData() {
-    --m_antLvlCnt;
-    if(!m_antLvlCnt) {
-        getAntennaLevel();
-        m_antLvlCnt = 10;
-    }
+	--m_antLvlCnt;
+	if(!m_antLvlCnt) {
+		getAntennaLevel();
+		m_antLvlCnt = 10;
+	}
 
-    switchPage(REGISTER_PAGE_DD);
+	switchPage(REGISTER_PAGE_DD);
 
-    uint8_t int_type_val1 = readRegister(INT_E_STATL);
-    bool ofdmLock = static_cast<bool>((int_type_val1 & 0x80u) >> 7u);
-    bool msc1Overrun = (int_type_val1 & MSC1_E_OVER_FLOW) >> 6u;
-    bool msc1Underrun = (int_type_val1 & MSC1_E_UNDER_FLOW) >> 5u;
-    bool msc1Int = (int_type_val1 & MSC1_E_INT) >> 4u;
-    bool msc0Overrun = (int_type_val1 & MSC0_E_OVER_FLOW) >> 3u;
-    bool msc0Underrun = (int_type_val1 & MSC0_E_UNDER_FLOW) >> 2u;
-    bool msc0Int = (int_type_val1 & MSC0_E_INT) >> 1u;
-    bool ficInt = (int_type_val1 & FIC_E_INT);
+	uint8_t int_type_val1 = readRegister(INT_E_STATL);
+	bool ofdmLock = static_cast<bool>((int_type_val1 & 0x80u) >> 7u);
+	bool msc1Overrun = (int_type_val1 & MSC1_E_OVER_FLOW) >> 6u;
+	bool msc1Underrun = (int_type_val1 & MSC1_E_UNDER_FLOW) >> 5u;
+	bool msc1Int = (int_type_val1 & MSC1_E_INT) >> 4u;
+	bool msc0Overrun = (int_type_val1 & MSC0_E_OVER_FLOW) >> 3u;
+	bool msc0Underrun = (int_type_val1 & MSC0_E_UNDER_FLOW) >> 2u;
+	bool msc0Int = (int_type_val1 & MSC0_E_INT) >> 1u;
+	bool ficInt = (int_type_val1 & FIC_E_INT);
 
 #if 0
     //TODO ensemble reconfiguration signalling
