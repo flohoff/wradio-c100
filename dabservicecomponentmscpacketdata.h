@@ -45,7 +45,7 @@ public:
     virtual void flushBufferedData() override;
 
 private:
-    void packetReframe(const std::vector<uint8_t>& mscData);
+    void packetSynchronize(const std::vector<uint8_t>& mscData);
     void packetInput(const std::vector<uint8_t>& pkt, int len);
     void applyFec(const std::vector<uint8_t>& pkt, int len);
 

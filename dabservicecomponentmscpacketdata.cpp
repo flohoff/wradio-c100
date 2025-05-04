@@ -150,7 +150,7 @@ void DabServiceComponentMscPacketData::packetInput(const std::vector<uint8_t>& p
 	}
 }
 
-void DabServiceComponentMscPacketData::packetReframe(const std::vector<uint8_t>& mscData) {
+void DabServiceComponentMscPacketData::packetSynchronize(const std::vector<uint8_t>& mscData) {
 
 	/* Overflow? */
 	m_unsyncDataBuffer.insert(m_unsyncDataBuffer.end(), mscData.begin(), mscData.end());
@@ -200,7 +200,7 @@ void DabServiceComponentMscPacketData::packetReframe(const std::vector<uint8_t>&
 }
 
 void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<uint8_t>& mscData) {
-	packetReframe(mscData);
+	packetSynchronize(mscData);
 	return;
 #if 0
     if(CRC_CCITT_CHECK(mscData.data(), mscData.size())) {
