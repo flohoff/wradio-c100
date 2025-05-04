@@ -139,27 +139,27 @@ void DabEnsemble::registerCbs() {
 }
 
 void DabEnsemble::dataInput(const std::vector<uint8_t>& data, uint8_t subChId) {
-
-	if(m_reseting) {
+	if(m_reseting)
 		return;
-	}
 
 	/* Subchannel 0x64 is the FIC */
-	if(subChId == 0x64) {
-		m_ficPtr->call(data);
-		return;
-	}
+	if(subChId == 0x64)
+		return m_ficPtr->call(data);
 
+	/* Do we have a registered stream component for this subchannel? */
 	auto compIter = m_streamComponentsMap.find(subChId);
 	if(compIter != m_streamComponentsMap.cend()) {
 		compIter->second->componentMscDataInput(data);
-	} else {
-		auto dataCompIter = m_packetComponentsMap.cbegin();
-		while(dataCompIter != m_packetComponentsMap.cend()) {
-			if(dataCompIter->second->getSubChannelId() == subChId) {
-				dataCompIter->second->componentMscDataInput(data);
-			}
-			++dataCompIter;
+		return;
+	}
+
+	/*
+	 * Try to find the data components on this subchannel which are organized
+	 * by serviceid
+	 */
+	for(auto &dataCompIter : m_packetComponentsMap) {
+		if(dataCompIter.second->getSubChannelId() == subChId) {
+			dataCompIter.second->componentMscDataInput(data);
 		}
 	}
 }
