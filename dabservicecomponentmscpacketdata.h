@@ -45,6 +45,9 @@ public:
     virtual void flushBufferedData() override;
 
 private:
+    void synchronizeData(const std::vector<uint8_t>& mscData);
+
+private:
     static constexpr uint8_t PACKETLENGTH[4][2] {
         //PacketLength / Packet datafield (useful) length
         {24, 19},

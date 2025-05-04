@@ -79,60 +79,62 @@ void DabServiceComponentMscPacketData::setDataServiceComponentType(uint8_t dscty
 void DabServiceComponentMscPacketData::flushBufferedData() {
 }
 
-void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<uint8_t>& mscData) {
-    if(false) {
-        return;
-    }
+void DabServiceComponentMscPacketData::synchronizeData(const std::vector<uint8_t>& mscData) {
+	std::vector<uint8_t> data;
 
-#ifdef DEBUG
-    std::cout << m_logTag
-	    << " #### PacketData DatagroupsUsed: " << std::boolalpha << m_dataGroupsUsed
-	    << " Synchronized: " << synchronized << std::noboolalpha
-	    << " DSCTy: " << +m_dscty
-	    << " DataSize: " << +mscData.size() << std::endl;
-#endif
+	if(!m_unsyncDataBuffer.empty()) {
+		data.insert(data.begin(), m_unsyncDataBuffer.begin(), m_unsyncDataBuffer.end());
+		m_unsyncDataBuffer.clear();
+	}
 
-    //if(m_subChanId != 0x0e || m_scIdS != 0) {
-    //    return;
-    //}
+	data.insert(data.end(), mscData.begin(), mscData.end());
 
-        std::vector<uint8_t> data;
-        if(!m_unsyncDataBuffer.empty()) {
-            data.insert(data.begin(), m_unsyncDataBuffer.begin(), m_unsyncDataBuffer.end());
-            m_unsyncDataBuffer.clear();
-        }
+	auto packIter = data.begin();
+	while(packIter < data.end()) {
+		uint8_t packetLength = (*packIter & 0xC0) >> 6;
 
-        data.insert(data.end(), mscData.begin(), mscData.end());
+		if((std::distance(data.begin(), packIter) + PACKETLENGTH[packetLength][0]) >= data.size()) {
+			//std::cout << " Breaking out for running out of data at pos: " << +std::distance(data.begin(), packIter) << " : " << +PACKETLENGTH[packetLength][0] << " : " << +data.size() << std::endl;
+			break;
+		}
+		uint8_t continuityIndex = (*packIter & 0x30) >> 4;
+		std::vector<uint8_t> checkDat(packIter, packIter + PACKETLENGTH[packetLength][0]);
 
-        auto packIter = data.begin();
-        while(packIter < data.end()) {
-            uint8_t packetLength = (*packIter & 0xC0) >> 6;
-            if((std::distance(data.begin(), packIter) + PACKETLENGTH[packetLength][0]) >= data.size()) {
-                //std::cout << " Breaking out for running out of data at pos: " << +std::distance(data.begin(), packIter) << " : " << +PACKETLENGTH[packetLength][0] << " : " << +data.size() << std::endl;
-                break;
-            }
-            uint8_t continuityIndex = (*packIter & 0x30) >> 4;
-            std::vector<uint8_t> checkDat(packIter, packIter + PACKETLENGTH[packetLength][0]);
-            if(CRC_CCITT_CHECK(checkDat.data(), checkDat.size())) {
+		if(!CRC_CCITT_CHECK(checkDat.data(), checkDat.size())) {
+			packIter++;
+			continue;
+		}
 
-#ifdef DEBUG
-                std::cout << " Found sync at: " << +std::distance(data.begin(), packIter)
+//#ifdef DEBUG
+		std::cout << " Found sync at: " << +std::distance(data.begin(), packIter)
 			<< " ContIdx: " << +continuityIndex
 			<< " PacketLength: " << +PACKETLENGTH[packetLength][0]
 			<< std::endl;
-#endif
+//#endif
 
-                packIter += PACKETLENGTH[packetLength][0];
-                continue;
-            }
-            packIter++;
-        }
+		packIter += PACKETLENGTH[packetLength][0];
+		continue;
+	}
 
-        //std::cout << " Caching " << +(data.size() - std::distance(data.begin(), packIter)) << " bytes from pos: " << +std::distance(data.begin(), packIter) << std::endl;
         m_unsyncDataBuffer.insert(m_unsyncDataBuffer.begin(), packIter, data.end());
 
-    return;
+        //std::cout << " Caching " << +(data.size() - std::distance(data.begin(), packIter)) << " bytes from pos: " << +std::distance(data.begin(), packIter) << std::endl;
+}
 
+void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<uint8_t>& mscData) {
+
+#ifdef DEBUG
+	std::cout << m_logTag
+		<< " #### PacketData DatagroupsUsed: " << std::boolalpha << m_dataGroupsUsed
+		<< " Synchronized: " << synchronized << std::noboolalpha
+		<< " DSCTy: " << +m_dscty
+		<< " DataSize: " << +mscData.size() << std::endl;
+#endif
+
+	synchronizeData(mscData);
+
+	return;
+#if 0
     if(CRC_CCITT_CHECK(mscData.data(), mscData.size())) {
 
         auto packetIter = mscData.begin();
@@ -264,4 +266,5 @@ void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<u
         }
         //std::cout << m_logTag << " ############################ MSC Packetdata DGUsed: " << std::boolalpha << m_dataGroupsUsed << std::noboolalpha << " Length: " << +mscData.size() << " : " << +DabServiceComponentMscPacketData::PACKETLENGTH[packetLength][0] << " - " << +usefulDataLength << " FirstLast: " << +firstLast << " for SubchanId: " << std::hex << +m_subChanId << std::dec <<  " Cont: " << +continuityIndex << " Address: " << +m_packetAddress << " : " << +packetAddress << " UApps: " << +m_userApplications.size() << std::endl;
     }
+#endif
 }
