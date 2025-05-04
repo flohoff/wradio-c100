@@ -1158,7 +1158,9 @@ void RaonTunerInput::stopReadDataThread() {
 }
 
 void RaonTunerInput::readMscData() {
+#ifdef DEBUG
         std::cout << LOG_TAG << "Reading MSC memory" << std::endl;
+#endif
 
 	switchPage(REGISTER_PAGE_MSC1);
 

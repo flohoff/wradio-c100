@@ -80,10 +80,17 @@ void DabServiceComponentMscPacketData::flushBufferedData() {
 }
 
 void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<uint8_t>& mscData, bool synchronized) {
-    if(true) {
+    if(false) {
         return;
     }
-    std::cout << m_logTag << " #### PacketData DatagroupsUsed: " << std::boolalpha << m_dataGroupsUsed << " Synchronized: " << synchronized << std::noboolalpha << " DSCTy: " << +m_dscty << " DataSize: " << +mscData.size() << std::endl;
+
+#ifdef DEBUG
+    std::cout << m_logTag
+	    << " #### PacketData DatagroupsUsed: " << std::boolalpha << m_dataGroupsUsed
+	    << " Synchronized: " << synchronized << std::noboolalpha
+	    << " DSCTy: " << +m_dscty
+	    << " DataSize: " << +mscData.size() << std::endl;
+#endif
 
     //if(m_subChanId != 0x0e || m_scIdS != 0) {
     //    return;
@@ -109,7 +116,14 @@ void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<u
             uint8_t continuityIndex = (*packIter & 0x30) >> 4;
             std::vector<uint8_t> checkDat(packIter, packIter + PACKETLENGTH[packetLength][0]);
             if(CRC_CCITT_CHECK(checkDat.data(), checkDat.size())) {
-                std::cout << " Found sync at: " << +std::distance(data.begin(), packIter) << " ContIdx: " << +continuityIndex << " PacketLength: " << +PACKETLENGTH[packetLength][0] << std::endl;
+
+#ifdef DEBUG
+                std::cout << " Found sync at: " << +std::distance(data.begin(), packIter)
+			<< " ContIdx: " << +continuityIndex
+			<< " PacketLength: " << +PACKETLENGTH[packetLength][0]
+			<< std::endl;
+#endif
+
                 packIter += PACKETLENGTH[packetLength][0];
                 continue;
             }
