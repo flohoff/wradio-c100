@@ -111,14 +111,13 @@ void DabServiceComponentMscPacketData::packetReframe(const std::vector<uint8_t>&
 	 * and we potentially could correct them with FEC - So using CRC
 	 * here for reframing makes the FEC useless.
 	 *
-	 * FIXME We will need some reset based on stats for the reframer.
 	 */
 	while(42) {
 		/* EN 300 401 - Signals packet size 24, 48, 72, 96 bytes */
 		int	len=pktLength(m_unsyncDataBuffer.data());
 
 		/* Do we have the full packet? */
-		if (m_unsyncDataBuffer.size() < len)
+		if (m_unsyncDataBuffer.size() <= len)
 			break;
 
 #define PKT_ADDRESS_FEC 0x3fe
