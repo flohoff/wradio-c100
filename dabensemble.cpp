@@ -139,24 +139,29 @@ void DabEnsemble::registerCbs() {
 }
 
 void DabEnsemble::dataInput(const std::vector<uint8_t>& data, uint8_t subChId) {
-    if(!m_reseting) {
-        if(subChId != 0x64) {
-            auto compIter = m_streamComponentsMap.find(subChId);
-            if(compIter != m_streamComponentsMap.cend()) {
-                compIter->second->componentMscDataInput(data);
-            } else {
-                auto dataCompIter = m_packetComponentsMap.cbegin();
-                while(dataCompIter != m_packetComponentsMap.cend()) {
-                    if(dataCompIter->second->getSubChannelId() == subChId) {
-                        dataCompIter->second->componentMscDataInput(data);
-                    }
-                    ++dataCompIter;
-                }
-            }
-        } else {
-            m_ficPtr->call(data);
-        }
-    }
+
+	if(m_reseting) {
+		return;
+	}
+
+	/* Subchannel 0x64 is the FIC */
+	if(subChId == 0x64) {
+		m_ficPtr->call(data);
+		return;
+	}
+
+	auto compIter = m_streamComponentsMap.find(subChId);
+	if(compIter != m_streamComponentsMap.cend()) {
+		compIter->second->componentMscDataInput(data);
+	} else {
+		auto dataCompIter = m_packetComponentsMap.cbegin();
+		while(dataCompIter != m_packetComponentsMap.cend()) {
+			if(dataCompIter->second->getSubChannelId() == subChId) {
+				dataCompIter->second->componentMscDataInput(data);
+			}
+			++dataCompIter;
+		}
+	}
 }
 
 //added to flush component decoders
