@@ -23,6 +23,7 @@
 #include <iostream>
 
 #include "global_definitions.h"
+#include "hexdump.hpp"
 
 #include "mscdatagroupdecoder.h"
 
@@ -79,60 +80,79 @@ void DabServiceComponentMscPacketData::setDataServiceComponentType(uint8_t dscty
 void DabServiceComponentMscPacketData::flushBufferedData() {
 }
 
-void DabServiceComponentMscPacketData::synchronizeData(const std::vector<uint8_t>& mscData) {
-	std::vector<uint8_t> data;
+void DabServiceComponentMscPacketData::applyFec(const std::vector<uint8_t>& pkt, int len) {
 
-	if(!m_unsyncDataBuffer.empty()) {
-		data.insert(data.begin(), m_unsyncDataBuffer.begin(), m_unsyncDataBuffer.end());
-		m_unsyncDataBuffer.clear();
+}
+
+
+/* EN 300 401 V2.1.1 5.3.2.0 Packet Header */
+#define pktLength(x) (((((x[0])>>6)&0x3)+1)*24)
+
+/* EN 300 401 V2.1.1 5.3.2.0 Packet Header Address */
+#define pktAddress(x) (((x[0])&0x3)<<8|(x[1]))
+
+void DabServiceComponentMscPacketData::packetInput(const std::vector<uint8_t>& pkt, int len) {
+	std::cout << "Packet len " << len
+		<< std::endl << Hexdump(m_unsyncDataBuffer.data(), len) << std::endl;
+
+	if (m_fecSchemeAplied) {
+		applyFec(pkt, len);
+		return;
 	}
+}
 
-	data.insert(data.end(), mscData.begin(), mscData.end());
+void DabServiceComponentMscPacketData::packetReframe(const std::vector<uint8_t>& mscData) {
 
-	auto packIter = data.begin();
-	while(packIter < data.end()) {
-		uint8_t packetLength = (*packIter & 0xC0) >> 6;
+	/* Overflow? */
+	m_unsyncDataBuffer.insert(m_unsyncDataBuffer.end(), mscData.begin(), mscData.end());
 
-		if((std::distance(data.begin(), packIter) + PACKETLENGTH[packetLength][0]) >= data.size()) {
-			//std::cout << " Breaking out for running out of data at pos: " << +std::distance(data.begin(), packIter) << " : " << +PACKETLENGTH[packetLength][0] << " : " << +data.size() << std::endl;
+	/*
+	 * We cant use CRC for packet identification here as bytes may be corrupt
+	 * and we potentially could correct them with FEC - So using CRC
+	 * here for reframing makes the FEC useless.
+	 *
+	 * FIXME We will need some reset based on stats for the reframer.
+	 */
+	while(42) {
+		/* EN 300 401 - Signals packet size 24, 48, 72, 96 bytes */
+		int	len=pktLength(m_unsyncDataBuffer.data());
+
+		/* Do we have the full packet? */
+		if (m_unsyncDataBuffer.size() < len)
 			break;
-		}
-		uint8_t continuityIndex = (*packIter & 0x30) >> 4;
-		std::vector<uint8_t> checkDat(packIter, packIter + PACKETLENGTH[packetLength][0]);
 
-		if(!CRC_CCITT_CHECK(checkDat.data(), checkDat.size())) {
-			packIter++;
+#define PKT_ADDRESS_FEC 0x3fe
+
+		/* FEC packets dont have a CRC - so dont try to make any sense of them */
+		if (pktAddress(m_unsyncDataBuffer.data()) != PKT_ADDRESS_FEC) {
+			if(!CRC_CCITT_CHECK(m_unsyncDataBuffer.data(), len)) {
+				m_crcfail++;
+			} else {
+				m_crcfail=0;
+			}
+		}
+
+		/*
+		 * 100 consecutive packets failed CRC so we assume out of sync by MSC buffer zap, chip reset whatever.
+		 * As FEC will also not work or correct the errors we should reset the FEC aswell
+		 *
+		 * We now start to drop bytes upfront until we find a valid CRC
+		 *
+		 */
+		if (m_crcfail > 100) {
+			m_unsyncDataBuffer.erase(m_unsyncDataBuffer.begin(), m_unsyncDataBuffer.begin()+1);
 			continue;
 		}
 
-//#ifdef DEBUG
-		std::cout << " Found sync at: " << +std::distance(data.begin(), packIter)
-			<< " ContIdx: " << +continuityIndex
-			<< " PacketLength: " << +PACKETLENGTH[packetLength][0]
-			<< std::endl;
-//#endif
+		packetInput(m_unsyncDataBuffer, len);
 
-		packIter += PACKETLENGTH[packetLength][0];
-		continue;
+		/* Remove packet from the begin of vector */
+		m_unsyncDataBuffer.erase(m_unsyncDataBuffer.begin(), m_unsyncDataBuffer.begin()+len);
 	}
-
-        m_unsyncDataBuffer.insert(m_unsyncDataBuffer.begin(), packIter, data.end());
-
-        //std::cout << " Caching " << +(data.size() - std::distance(data.begin(), packIter)) << " bytes from pos: " << +std::distance(data.begin(), packIter) << std::endl;
 }
 
 void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<uint8_t>& mscData) {
-
-#ifdef DEBUG
-	std::cout << m_logTag
-		<< " #### PacketData DatagroupsUsed: " << std::boolalpha << m_dataGroupsUsed
-		<< " Synchronized: " << synchronized << std::noboolalpha
-		<< " DSCTy: " << +m_dscty
-		<< " DataSize: " << +mscData.size() << std::endl;
-#endif
-
-	synchronizeData(mscData);
-
+	packetReframe(mscData);
 	return;
 #if 0
     if(CRC_CCITT_CHECK(mscData.data(), mscData.size())) {

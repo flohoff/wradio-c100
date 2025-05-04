@@ -45,7 +45,9 @@ public:
     virtual void flushBufferedData() override;
 
 private:
-    void synchronizeData(const std::vector<uint8_t>& mscData);
+    void packetReframe(const std::vector<uint8_t>& mscData);
+    void packetInput(const std::vector<uint8_t>& pkt, int len);
+    void applyFec(const std::vector<uint8_t>& pkt, int len);
 
 private:
     static constexpr uint8_t PACKETLENGTH[4][2] {
@@ -81,6 +83,7 @@ private:
     bool m_dataGroupsUsed{false};
 
     MscPacketData m_mscPacket;
+    int m_crcfail{0};
 
     std::vector<uint8_t> m_unsyncDataBuffer;
 };
