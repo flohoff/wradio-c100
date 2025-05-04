@@ -53,6 +53,9 @@ std::ostream& operator<<(std::ostream& out, const CustomHexdump<RowSize, ShowAsc
         }
         out << std::endl;
     }
+
+    out << std::dec;
+
     return out;
 }
 
