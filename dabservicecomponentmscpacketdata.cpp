@@ -79,7 +79,7 @@ void DabServiceComponentMscPacketData::setDataServiceComponentType(uint8_t dscty
 void DabServiceComponentMscPacketData::flushBufferedData() {
 }
 
-void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<uint8_t>& mscData, bool synchronized) {
+void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<uint8_t>& mscData) {
     if(false) {
         return;
     }
@@ -96,8 +96,6 @@ void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<u
     //    return;
     //}
 
-    //TODO synchronize data, cache overlap etc....partly done....thread this for processing
-    if(!synchronized) {
         std::vector<uint8_t> data;
         if(!m_unsyncDataBuffer.empty()) {
             data.insert(data.begin(), m_unsyncDataBuffer.begin(), m_unsyncDataBuffer.end());
@@ -132,7 +130,6 @@ void DabServiceComponentMscPacketData::componentMscDataInput(const std::vector<u
 
         //std::cout << " Caching " << +(data.size() - std::distance(data.begin(), packIter)) << " bytes from pos: " << +std::distance(data.begin(), packIter) << std::endl;
         m_unsyncDataBuffer.insert(m_unsyncDataBuffer.begin(), packIter, data.end());
-    }
 
     return;
 

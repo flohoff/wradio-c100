@@ -41,7 +41,7 @@ public:
     virtual ~DabPlusServiceComponentDecoder();
 
     virtual void setSubchannelBitrate(uint16_t bitrate) override;
-    virtual void componentDataInput(const std::vector<uint8_t>& frameData, bool synchronized) override;
+    virtual void componentDataInput(const std::vector<uint8_t>& frameData) override;
     virtual void flushBufferedData() override;
 
     //special case for MscStreamAudio

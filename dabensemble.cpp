@@ -138,17 +138,17 @@ void DabEnsemble::registerCbs() {
     m_19Ptr = m_ficPtr.get()->registerFig_00_19_Callback(std::bind(&DabEnsemble::fig00_19_input, this, std::placeholders::_1));
 }
 
-void DabEnsemble::dataInput(const std::vector<uint8_t>& data, uint8_t subChId, bool synchronized) {
+void DabEnsemble::dataInput(const std::vector<uint8_t>& data, uint8_t subChId) {
     if(!m_reseting) {
         if(subChId != 0x64) {
             auto compIter = m_streamComponentsMap.find(subChId);
             if(compIter != m_streamComponentsMap.cend()) {
-                compIter->second->componentMscDataInput(data, synchronized);
+                compIter->second->componentMscDataInput(data);
             } else {
                 auto dataCompIter = m_packetComponentsMap.cbegin();
                 while(dataCompIter != m_packetComponentsMap.cend()) {
                     if(dataCompIter->second->getSubChannelId() == subChId) {
-                        dataCompIter->second->componentMscDataInput(data, synchronized);
+                        dataCompIter->second->componentMscDataInput(data);
                     }
                     ++dataCompIter;
                 }

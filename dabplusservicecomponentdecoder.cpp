@@ -53,19 +53,15 @@ void DabPlusServiceComponentDecoder::setSubchannelBitrate(uint16_t bitrate) {
     std::cout << m_logTag << " SuperFrameSize: " << +m_superFrameSize << " SubchanBitrate: " << +m_subChanBitrate << std::endl;
 }
 
-void DabPlusServiceComponentDecoder::componentDataInput(const std::vector<uint8_t> &frameData, bool synchronized) {
-    //std::cout << m_logTag << " DataInput Size: " << +frameData.size() << std::endl;
-    if(!m_processThreadRunning) {
-        return;
-    }
+void DabPlusServiceComponentDecoder::componentDataInput(const std::vector<uint8_t> &frameData) {
+	//std::cout << m_logTag << " DataInput Size: " << +frameData.size() << std::endl;
+	if(!m_processThreadRunning) {
+		return;
+	}
 
-    if(synchronized) {
-        m_conQueue.push(frameData);
-    } else {
-        if(m_frameSize > 0) {
-            synchronizeData(frameData);
-        }
-    }
+	if(m_frameSize > 0) {
+		synchronizeData(frameData);
+	}
 }
 
 void DabPlusServiceComponentDecoder::flushBufferedData() {

@@ -33,7 +33,7 @@ public:
 
     virtual void setDataServiceComponentType(uint8_t dscty);
 
-    virtual void componentMscDataInput(const std::vector<uint8_t>& mscData, bool synchronized) override;
+    virtual void componentMscDataInput(const std::vector<uint8_t>& mscData) override;
     virtual void flushBufferedData() override;
 
 private:

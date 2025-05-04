@@ -34,7 +34,7 @@ public:
     DabMpegServiceComponentDecoder();
     virtual ~DabMpegServiceComponentDecoder();
 
-    virtual void componentDataInput(const std::vector<uint8_t>& frameData, bool synchronized) override;
+    virtual void componentDataInput(const std::vector<uint8_t>& frameData) override;
     virtual void flushBufferedData() override;
 
     using PAD_DATA_CALLBACK = std::function<void (const std::vector<uint8_t>&)>;

@@ -38,7 +38,7 @@ void DabServiceComponentMscStreamData::setDataServiceComponentType(uint8_t dscty
     m_dscTy = dscty;
 }
 
-void DabServiceComponentMscStreamData::componentMscDataInput(const std::vector<uint8_t>& mscData, bool synchronized) {
+void DabServiceComponentMscStreamData::componentMscDataInput(const std::vector<uint8_t>& mscData) {
     std::cout << " MscStreamData Input ################" << std::endl;
 }
 

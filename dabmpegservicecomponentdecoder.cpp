@@ -55,16 +55,17 @@ void DabMpegServiceComponentDecoder::flushBufferedData() {
     m_conQueue.clear();
 }
 
-void DabMpegServiceComponentDecoder::componentDataInput(const std::vector<uint8_t> &frameData, bool synchronized) {
-    //std::cout << m_logTag << "componentDataInput: " << frameData.size() << " - " << +m_frameSize << " : " << +m_subChanBitrate << " : " << std::hex << std::setfill('0') << std::setw(2) << +frameData[0] << +frameData[1] << +frameData[2] << std::dec << std::endl;
+void DabMpegServiceComponentDecoder::componentDataInput(const std::vector<uint8_t> &frameData) {
+#ifdef DEBUG
+	std::cout << m_logTag << "componentDataInput: " << frameData.size()
+		<< " - " << +m_frameSize << " : " << +m_subChanBitrate << " : "
+		<< std::hex << std::setfill('0') << std::setw(2) << +frameData[0]
+		<< +frameData[1] << +frameData[2] << std::dec << std::endl;
+#endif
 
-    if(synchronized) {
-        m_conQueue.push(frameData);
-    } else {
-        if(m_frameSize > 0) {
-            synchronizeData(frameData);
-        }
-    }
+	if(m_frameSize > 0) {
+		synchronizeData(frameData);
+	}
 }
 
 void DabMpegServiceComponentDecoder::synchronizeData(const std::vector<uint8_t>& unsyncData) {

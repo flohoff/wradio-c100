@@ -1,4 +1,4 @@
-/*
+# /*
  * Copyright (C) 2018 IRT GmbH
  *
  * Author:
@@ -1172,7 +1172,7 @@ void RaonTunerInput::readMscData() {
 	bytesTransfered = m_usbDevice->bulk_read(RAON_ENDPOINT_IN, mscRecBuff, 100);
 
 	if(m_startServiceLink != nullptr && bytesTransfered > 4) {
-		dataInput(std::vector<uint8_t>(mscRecBuff.begin()+4, mscRecBuff.begin()+bytesTransfered), m_currentSubchanId, false);
+		dataInput(std::vector<uint8_t>(mscRecBuff.begin()+4, mscRecBuff.begin()+bytesTransfered), m_currentSubchanId);
 	} else {
 		std::cout << LOG_TAG << "StartServiceLink is null ( less than 4 bytes header )" << std::endl;
 	}
@@ -1202,7 +1202,7 @@ void RaonTunerInput::readFicData() {
 
 	for(int i = 0; i < ((bytesTransfered - 4) / 32); i++) {
 		try {
-			dataInput(std::vector<uint8_t>(reFicRet.begin() + 4 + i * 32, reFicRet.begin() + 4 + i * 32 + 32), 0x64, false);
+			dataInput(std::vector<uint8_t>(reFicRet.begin() + 4 + i * 32, reFicRet.begin() + 4 + i * 32 + 32), 0x64);
 		} catch(std::length_error& lenErr) {
 			std::cout << LOG_TAG << "Length error..." << std::endl;
 		}

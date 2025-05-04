@@ -35,7 +35,7 @@ public:
     virtual ~DabServiceComponentDecoder();
 
     virtual void setSubchannelBitrate(uint16_t bitrate);
-    virtual void componentDataInput(const std::vector<uint8_t>& frameData, bool synchronized) = 0;
+    virtual void componentDataInput(const std::vector<uint8_t>& frameData) = 0;
     virtual void flushBufferedData();
 
     using Component_Data_Callback = std::function<void(const std::vector<uint8_t>&)>;

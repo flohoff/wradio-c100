@@ -80,7 +80,7 @@ public:
 
     virtual void addUserApplication(const DabUserApplication& uApp);
 
-    virtual void componentMscDataInput(const std::vector<uint8_t>& mscData, bool synchronized) = 0;
+    virtual void componentMscDataInput(const std::vector<uint8_t>& mscData) = 0;
 
     virtual void flushBufferedData();
 

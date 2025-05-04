@@ -103,12 +103,12 @@ void DabServiceComponentMscStreamAudio::setSubchannelId(uint8_t subChanId) {
     }
 }
 
-void DabServiceComponentMscStreamAudio::componentMscDataInput(const std::vector<uint8_t>& mscData, bool synchronized) {
+void DabServiceComponentMscStreamAudio::componentMscDataInput(const std::vector<uint8_t>& mscData) {
     //std::cout << m_logTag << " MSC Data input: " << std::hex << +mscData.data()[0] << std::dec << std::endl;
 
     if(m_subChanId != 0xFF) {
         if(m_componentDecoder != nullptr) {
-            m_componentDecoder->componentDataInput(mscData, synchronized);
+            m_componentDecoder->componentDataInput(mscData);
         }
     }
 }

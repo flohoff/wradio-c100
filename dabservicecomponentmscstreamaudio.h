@@ -40,7 +40,7 @@ public:
     virtual void setSubchannelId(uint8_t subChanId) override;
 
     virtual void addUserApplication(const DabUserApplication& uApp) override;
-    virtual void componentMscDataInput(const std::vector<uint8_t>& mscData, bool synchronized) override;
+    virtual void componentMscDataInput(const std::vector<uint8_t>& mscData) override;
     virtual void flushBufferedData() override;
 
     using AUDIO_DATA_CALLBACK = std::function<void (const std::vector<uint8_t>&, int, int, int, bool, bool)>;
