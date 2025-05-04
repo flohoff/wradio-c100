@@ -27,14 +27,20 @@
 
 #include "mscdatagroupdecoder.h"
 
+extern "C" {
+    #include "thirdparty/fec/fec.h"
+}
+
 constexpr uint8_t DabServiceComponentMscPacketData::PACKETLENGTH[4][2];
 
 DabServiceComponentMscPacketData::DabServiceComponentMscPacketData() {
     m_componentType = DabServiceComponent::SERVICECOMPONENTTYPE::MSC_PACKET_MODE_DATA;
+    m_fecBuffer.reserve(FEC_BUFFER_SIZE);
+    rs_handle=init_rs_char(8, 0x11d, 0, 1, 16, 0);
 }
 
 DabServiceComponentMscPacketData::~DabServiceComponentMscPacketData() {
-
+    free_rs_char(rs_handle);
 }
 
 uint16_t DabServiceComponentMscPacketData::getDataServiceComponentId() const {
@@ -80,10 +86,10 @@ void DabServiceComponentMscPacketData::setDataServiceComponentType(uint8_t dscty
 void DabServiceComponentMscPacketData::flushBufferedData() {
 }
 
-void DabServiceComponentMscPacketData::applyFec(const std::vector<uint8_t>& pkt, int len) {
+#define PKT_ADDRESS_FEC 0x3fe
 
-}
-
+/* EN 300 401 - 5.3.5.2 - Packet header Counter b13 .. b10 */
+#define pktCounter(x)   ((x[0] >> 2) & 0xf)
 
 /* EN 300 401 V2.1.1 5.3.2.0 Packet Header */
 #define pktLength(x) (((((x[0])>>6)&0x3)+1)*24)
@@ -91,10 +97,53 @@ void DabServiceComponentMscPacketData::applyFec(const std::vector<uint8_t>& pkt,
 /* EN 300 401 V2.1.1 5.3.2.0 Packet Header Address */
 #define pktAddress(x) (((x[0])&0x3)<<8|(x[1]))
 
-void DabServiceComponentMscPacketData::packetInput(const std::vector<uint8_t>& pkt, int len) {
-	std::cout << "Packet len " << len
-		<< std::endl << Hexdump(m_unsyncDataBuffer.data(), len) << std::endl;
+typedef CustomHexdump<255, true> FECHexdump;
 
+void DabServiceComponentMscPacketData::applyFec(const std::vector<uint8_t>& pkt, int len) {
+
+	if (pktAddress(pkt.data()) == PKT_ADDRESS_FEC) {
+		/* We calculate the position to put these bytes into by the FEC packet code */
+		int pos=pktCounter(pkt.data())*FEC_PKT_BYTES;
+		for(int i=0;i<len-2;i++) {
+			int poff=pos+i;
+			int row=poff % FEC_ROWS;
+			int column=FEC_DATA_COLUMNS+poff/FEC_ROWS;
+
+			int off=row * FEC_COLUMNS + column;
+
+			m_fecBuffer[off]=pkt[i+2];
+		}
+
+		if (pktCounter(pkt.data()) == 8) {
+			int corr_pos[10];
+			int corr_count=decode_rs_char(rs_handle, m_fecBuffer.data(), corr_pos, 0);
+
+			std::cout << "RS corr_count " << corr_count << std::endl;
+
+			m_fecPosition=0;
+		}
+	} else {
+		if (m_fecPosition+len > FEC_DATA_SIZE) {
+			/* FIXME - We overflow the FEC buffer */
+			m_fecPosition=0;
+			return;
+		}
+
+		for(int i=0;i<len;i++) {
+			int pos=m_fecPosition+i;
+			int row=pos % FEC_ROWS;
+
+			int column=FEC_PAD + pos / FEC_ROWS;
+			int off=row * FEC_COLUMNS + column;
+
+			m_fecBuffer[off]=pkt[i];
+		}
+
+		m_fecPosition+=len;
+	}
+}
+
+void DabServiceComponentMscPacketData::packetInput(const std::vector<uint8_t>& pkt, int len) {
 	if (m_fecSchemeAplied) {
 		applyFec(pkt, len);
 		return;
@@ -120,7 +169,6 @@ void DabServiceComponentMscPacketData::packetReframe(const std::vector<uint8_t>&
 		if (m_unsyncDataBuffer.size() <= len)
 			break;
 
-#define PKT_ADDRESS_FEC 0x3fe
 
 		/* FEC packets dont have a CRC - so dont try to make any sense of them */
 		if (pktAddress(m_unsyncDataBuffer.data()) != PKT_ADDRESS_FEC) {
@@ -139,6 +187,7 @@ void DabServiceComponentMscPacketData::packetReframe(const std::vector<uint8_t>&
 		 *
 		 */
 		if (m_crcfail > 100) {
+			std::cout << "CRC failed x consecutive packets - may be out of sync - scanning buffer for correct packet" << std::endl;
 			m_unsyncDataBuffer.erase(m_unsyncDataBuffer.begin(), m_unsyncDataBuffer.begin()+1);
 			continue;
 		}

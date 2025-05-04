@@ -85,6 +85,18 @@ private:
     MscPacketData m_mscPacket;
     int m_crcfail{0};
 
+#define FEC_DATA_SIZE		2256
+#define FEC_BUFFER_SIZE		(FEC_COLUMNS*FEC_ROWS)
+#define FEC_DATA_COLUMNS	239
+#define FEC_COLUMNS		255
+#define FEC_ROWS		12
+#define FEC_PAD			51
+#define FEC_PKT_BYTES		22
+
+    int m_fecPosition{0};
+    void *rs_handle;
+
+    std::vector<uint8_t> m_fecBuffer;
     std::vector<uint8_t> m_unsyncDataBuffer;
 };
 
