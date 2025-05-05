@@ -1,7 +1,6 @@
 
 #include "jdabservice.h"
 #include "dabservicecomponentmscpacketdata.h"
-#include "dabdatapktpipeline.h"
 
 class JDabPPPRTKService : public JDabService {
 	private:
