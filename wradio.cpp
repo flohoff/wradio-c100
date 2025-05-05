@@ -9,7 +9,7 @@
 
 #include "usb.hpp"
 #include "raontunerinput.h"
-#include "jdabservice.h"
+#include "jdabppprtkservice.h"
 
 int main(void ) {
 	USB	usb;
@@ -32,8 +32,8 @@ int main(void ) {
 	// Bundexmux Kanal 5C
 	// Ensemble ID 0x10bc
 	// Service ID 0xe0d210bc
-	std::shared_ptr<JDabService>	jdab;
-	jdab=std::make_shared<JDabService>(178352000, 0xFF, 0x10bc, 0xe0d210bc);
+	std::shared_ptr<JDabPPPRTKService>	jdab;
+	jdab=std::make_shared<JDabPPPRTKService>(178352000, 0xFF, 0x10bc, 0xe0d210bc);
 
 	tuner.startService(jdab);
 

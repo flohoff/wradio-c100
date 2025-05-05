@@ -56,58 +56,10 @@ public:
 
     uint16_t m_subchanHandle{0xFFFF};
 
-private:
+protected:
     const std::string m_logTag{"[JDabService] "};
 
-    //Java definitions
-    //*JavaVM* m_javaVm;
     std::shared_ptr<DabService> m_linkedDabService{nullptr};
-#if 0
-    jobject m_linkedJavaDabServiceObject{nullptr};
-    jclass m_javaDabServiceClass;
-
-    jmethodID m_javaDabSrvGetEnsembleFrequencyMId;
-    jmethodID m_javaDabSrvGetEnsembleEccMId;
-    jmethodID m_javaDabSrvGetEnsembleIdMId;
-    jmethodID m_javaDabSrvGetServiceIdMId;
-
-    jmethodID m_javaDabSrvAudioDataCallbackMId;
-    jmethodID m_javaDabSrvAudioformatChangedCallbackMId;
-
-    //DLS
-    jclass m_javaDlsClass;
-    jmethodID m_javaDlsConstructorMId;
-    jmethodID m_javaDlsSetFullTextMId;
-    jmethodID m_javaDlsSetFulltextBytesMId;
-    jmethodID m_javaDlsSetItemRunningMId;
-    jmethodID m_javaDlsSetItemToggledMId;
-    jmethodID m_javaDlsAddTagItemMId;
-    //DLS Callback
-    jmethodID m_javaDabSrvdynamicLabelReceivedCallbackMId;
-
-    //DLPlusItem
-    jclass m_javaDlPlusItemClass;
-    jmethodID m_javaDlPlusItemConstructorMId;
-    jmethodID m_javaDlPlusItemSetContentTypeMId;
-    jmethodID m_javaDlPlusItemSetTextMId;
-
-    //SLS
-    jclass m_javaSlsClass;
-    jmethodID m_javaSlsConstructorMId;
-    jmethodID m_javaSlsSetContentNameMId;
-    jmethodID m_javaSlsSetVisualDataMId;
-    jmethodID m_javaSlsSetMimeTypeMId;
-    jmethodID m_javaSlsSetContentTypeMId;
-    jmethodID m_javaSlsSetContentSubTypeMId;
-    jmethodID m_javaSlsSetAltLocUrlMId;
-    jmethodID m_javaSlsSetSlideIdMId;
-    jmethodID m_javaSlsSetCategoryTextMId;
-    jmethodID m_javaSlsSetCategoryIdMId;
-    jmethodID m_javaSlsSetClickThroughUrlMId;
-    //SLS Callback
-    jmethodID m_javaDabSrvslideshowReceivedCallbackMId;
-#endif
-    //local
     uint32_t m_serviceId{0xFFFFFFFF};
     uint32_t m_ensembleFrequency{0x00};
     uint16_t m_ensembleId{0xFFFF};
@@ -133,11 +85,6 @@ private:
     void audioDataInput(const std::vector<uint8_t>& audioData, int ascty, int channels, int sampleRate, bool sbrUsed, bool psUsed);
     void dynamicLabelInput(std::shared_ptr<void> label);
     void slideshowInput(std::shared_ptr<void> slideShow);
-
-#if 0
-    void callJavaSlideshowCallback(const std::shared_ptr<DabSlideshow>& slide);
-    void callJavaDynamiclabelCallback(const std::shared_ptr<DabDynamicLabel>& label);
-#endif
 };
 
 

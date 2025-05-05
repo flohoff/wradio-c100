@@ -22,6 +22,7 @@
 #define DABSERVICECOMPONENTMSCPACKETDATA_H
 
 #include "dabservicecomponent.h"
+#include "callbackhandle.h"
 
 class DabServiceComponentMscPacketData : public DabServiceComponent {
 
@@ -44,10 +45,16 @@ public:
     virtual void componentMscDataInput(const std::vector<uint8_t>& mscData) override;
     virtual void flushBufferedData() override;
 
+    using PACKET_DATA_CALLBACK = std::function<void (const std::vector<uint8_t>&, int)>;
+    virtual std::shared_ptr<DabServiceComponentMscPacketData::PACKET_DATA_CALLBACK> registerPacketDataCallback(DabServiceComponentMscPacketData::PACKET_DATA_CALLBACK cb);
+
 private:
     void packetSynchronize(const std::vector<uint8_t>& mscData);
     void packetInput(const std::vector<uint8_t>& pkt, int len);
     void applyFec(const std::vector<uint8_t>& pkt, int len);
+    void frameAggregate(const std::vector<uint8_t>& pkt, int len);
+
+    CallbackDispatcher<PACKET_DATA_CALLBACK> m_packetDataDispatcher;
 
 private:
     static constexpr uint8_t PACKETLENGTH[4][2] {

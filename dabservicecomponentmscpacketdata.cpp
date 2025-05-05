@@ -43,6 +43,10 @@ DabServiceComponentMscPacketData::~DabServiceComponentMscPacketData() {
     free_rs_char(rs_handle);
 }
 
+std::shared_ptr<DabServiceComponentMscPacketData::PACKET_DATA_CALLBACK> DabServiceComponentMscPacketData::registerPacketDataCallback(DabServiceComponentMscPacketData::PACKET_DATA_CALLBACK cb) {
+	return m_packetDataDispatcher.add(cb);
+}
+
 uint16_t DabServiceComponentMscPacketData::getDataServiceComponentId() const {
     return m_serviceComponentId;
 }
@@ -144,6 +148,7 @@ void DabServiceComponentMscPacketData::applyFec(const std::vector<uint8_t>& pkt,
 }
 
 void DabServiceComponentMscPacketData::packetInput(const std::vector<uint8_t>& pkt, int len) {
+	m_packetDataDispatcher.invoke(pkt, len);
 	if (m_fecSchemeAplied) {
 		applyFec(pkt, len);
 		return;
