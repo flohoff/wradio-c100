@@ -47,38 +47,45 @@ class DabDataFrame {
 #define DG_SEGMENT_FLAG		0x20
 #define DG_USERACCESS_FLAG	0x10
 
-		bool dg_has_crc(void ) {
+		bool dg_has_crc(void ) const {
 			/* EN 300 401 V2.1.1 5.3.3.0 */
 			return (buffer.data()[0] & DG_CRC_FLAG) != 0;
 		}
 
-		bool dg_has_segment(void ) {
+		bool dg_has_segment(void ) const {
 			/* EN 300 401 V2.1.1 5.3.3.0 */
 			return (buffer.data()[0] & DG_SEGMENT_FLAG) != 0;
 		}
 
-		bool dg_has_useraccess(void ) {
+		bool dg_has_useraccess(void ) const {
 			/* EN 300 401 V2.1.1 5.3.3.0 */
 			return (buffer.data()[0] & DG_USERACCESS_FLAG) != 0;
 		}
 
-		bool dg_has_extension(void ) {
+		bool dg_has_extension(void ) const {
 			/* EN 300 401 V2.1.1 5.3.3.0 */
 			return (buffer.data()[0] & DG_EXTENSION_FLAG) != 0;
 		}
 
-		uint8_t dg_continuity(void ) {
+		uint8_t dg_continuity(void ) const {
 			/* EN 400 401 V2.1.1 5.3.3.1 */
 			return (buffer.data()[1] & 0xf0) >> 4;
 		}
 
-		uint8_t dg_repetition(void ) {
+		uint8_t dg_repetition(void ) const {
 			/* EN 400 401 V2.1.1 5.3.3.1 */
 			return (buffer.data()[1] & 0xf);
 		}
 
 		friend std::ostream& operator<<(std::ostream& out, const DabDataFrame &frame) {
-			return out << "Length " << frame.buffer.size() << std::endl
+			return out
+				<< std::boolalpha
+				<< " Continuity " << (int) frame.dg_continuity()
+				<< " Length " << frame.buffer.size()
+				<< " extension " << frame.dg_has_extension()
+				<< " useraccess " << frame.dg_has_useraccess()
+				<< " segment " << frame.dg_has_segment()
+				<< std::endl
 				<< Hexdump((const void *) frame.buffer.data(), frame.buffer.size());
 		}
 };
