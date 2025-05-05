@@ -23,6 +23,9 @@
 
 #include "dabservicecomponent.h"
 #include "callbackhandle.h"
+#include "dabdatapkt.h"
+#include "dabdatafec.h"
+#include "dabdataframeaggregator.h"
 
 class DabServiceComponentMscPacketData : public DabServiceComponent {
 
@@ -45,16 +48,16 @@ public:
     virtual void componentMscDataInput(const std::vector<uint8_t>& mscData) override;
     virtual void flushBufferedData() override;
 
-    using PACKET_DATA_CALLBACK = std::function<void (const std::vector<uint8_t>&, int)>;
-    virtual std::shared_ptr<DabServiceComponentMscPacketData::PACKET_DATA_CALLBACK> registerPacketDataCallback(DabServiceComponentMscPacketData::PACKET_DATA_CALLBACK cb);
+    using DATA_FRAME_CALLBACK = std::function<void (std::shared_ptr<DabDataFrame>)>;
+    virtual std::shared_ptr<DabServiceComponentMscPacketData::DATA_FRAME_CALLBACK> registerPacketDataCallback(DabServiceComponentMscPacketData::DATA_FRAME_CALLBACK cb);
 
 private:
     void packetSynchronize(const std::vector<uint8_t>& mscData);
-    void packetInput(const std::vector<uint8_t>& pkt, int len);
-    void applyFec(const std::vector<uint8_t>& pkt, int len);
-    void frameAggregate(const std::vector<uint8_t>& pkt, int len);
+    void packetInput(std::shared_ptr<DabDataPkt> pkt);
+    void frameAggregate(std::shared_ptr<DabDataPkt> pkt);
+    void packetDeduplicate(std::shared_ptr<DabDataPkt> pkt);
 
-    CallbackDispatcher<PACKET_DATA_CALLBACK> m_packetDataDispatcher;
+    CallbackDispatcher<DATA_FRAME_CALLBACK> m_dataFrameDispatcher;
 
 private:
     static constexpr uint8_t PACKETLENGTH[4][2] {
@@ -80,6 +83,8 @@ private:
         std::vector<uint8_t> packetData;
     };
 
+    DabDataFec	fec;
+
 private:
     std::string m_logTag = "[DabServiceComponentMscPacketData]";
 
@@ -91,20 +96,14 @@ private:
 
     MscPacketData m_mscPacket;
     int m_crcfail{0};
+    int m_seqno{0};
 
-#define FEC_DATA_SIZE		2256
-#define FEC_BUFFER_SIZE		(FEC_COLUMNS*FEC_ROWS)
-#define FEC_DATA_COLUMNS	239
-#define FEC_COLUMNS		255
-#define FEC_ROWS		12
-#define FEC_PAD			51
-#define FEC_PKT_BYTES		22
-
-    int m_fecPosition{0};
-    void *rs_handle;
-
-    std::vector<uint8_t> m_fecBuffer;
     std::vector<uint8_t> m_unsyncDataBuffer;
+
+    bool	plugged{false};
+    int		seq_last{0};
+    uint8_t	continuity_last;
+    DabDataFrameAggregator	aggregator;
 };
 
 #endif // DABSERVICECOMPONENTMSCPACKETDATA_H

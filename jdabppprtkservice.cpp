@@ -1,8 +1,11 @@
 #include "jdabppprtkservice.h"
 #include "dabservicecomponentmscpacketdata.h"
 
-void JDabPPPRTKService::packetDataInput(const std::vector<uint8_t> &data, int len) {
-	//std::cout << "Packet callback called" << std::endl;
+void JDabPPPRTKService::dataFrameInput(std::shared_ptr<DabDataFrame> frame) {
+
+	std::cout << "Frame callback called" << std::endl
+		<< *frame
+		<< std::endl;
 
 }
 
@@ -18,7 +21,7 @@ void JDabPPPRTKService::setLinkDabService(std::shared_ptr<DabService> linkedDabS
 		}
 
 		std::shared_ptr<DabServiceComponentMscPacketData> packetComponent = std::static_pointer_cast<DabServiceComponentMscPacketData>(srvComp);
-		m_packetDataCb=packetComponent->registerPacketDataCallback(std::bind(&JDabPPPRTKService::packetDataInput, this, std::placeholders::_1, std::placeholders::_2));
+		m_packetDataCb=packetComponent->registerPacketDataCallback(std::bind(&JDabPPPRTKService::dataFrameInput, this, std::placeholders::_1));
 	}
 }
 
