@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 project (wradio)
-
+set(CMAKE_BUILD_TYPE Debug)
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
@@ -91,6 +91,8 @@ add_executable(wradio wradio.cpp raontunerinput.cpp dabensemble.cpp ficparser.cp
 	fig_01_ext_05.cpp
 	fig_01_ext_06.cpp
 	jdabppprtkservice.cpp
+	dabdatapkt.cpp
+	dabdatafec.cpp
 	)
 include_directories(${LIBUSB_INCLUDE_DIRS})
 target_link_libraries(wradio ${LIBUSB_LIBRARIES})
