@@ -4,6 +4,7 @@
 #include "jdabservice.h"
 #include "rtcmframe.h"
 #include "dabservicecomponentmscpacketdata.h"
+#include "concurrent_queue.h"
 
 class JDabPPPRTKService : public JDabService {
 	private:
@@ -16,7 +17,13 @@ class JDabPPPRTKService : public JDabService {
 	virtual void setLinkDabService(std::shared_ptr<DabService> linkedDabSrv);
 
 	private:
+	void NTRIPServer();
 	void dataFrameInput(std::shared_ptr<DabDataFrame> frame);
+
+	ConcurrentQueue<std::shared_ptr<RtcmFrame>>	m_rtcmQueue;
+	std::thread					m_rtcmServer;
+
+	int						ntripsocket;
 };
 
 #endif

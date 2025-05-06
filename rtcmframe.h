@@ -43,6 +43,14 @@ class RtcmFrame {
 		return ((buffer[1]&0x3)<<8)|(buffer[2])+RTCM_HDR_BYTES+RTCM_CRC_BYTES;
 	}
 
+	std::size_t size(void ) {
+		return buffer.size();
+	}
+
+	uint8_t *data(void ) {
+		return buffer.data();
+	}
+
 	bool complete(void ) const {
 		return buffersize() >= length();
 	}
