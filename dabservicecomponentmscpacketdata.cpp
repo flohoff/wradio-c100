@@ -110,32 +110,78 @@ void DabServiceComponentMscPacketData::frameAggregate(std::shared_ptr<DabDataPkt
 }
 
 void DabServiceComponentMscPacketData::packetDeduplicate(std::shared_ptr<DabDataPkt> pkt) {
-	/* Initialization - we drop the first packet and store its sequence and continuity */
-	if (seq_last == 0) {
-                  continuity_last=pkt->continuity();
-                  seq_last=pkt->seq();
-                  return;
+#ifdef DEBUG_PKTDEDUPE
+	std::cout << "packetDeduplicate: Packet enter seq " << pkt->seq()
+		<< " length " << (int) pkt->length()
+		<< " size " << (int) pkt->size()
+		<< " plugged " << std::boolalpha << plugged
+		<< " isfec " << pkt->is_fec()
+		<< " address " << pkt->address()
+		<< " continuity " << (int) pkt->continuity()
+		<< " fec handled " << pkt->fec_handled()
+		<< " crc ok " << std::boolalpha << pkt->crc_correct()
+		<< std::endl;
+#endif
+	/* Null/PAD packets or FEC packets - no need to process */
+	if (pkt->address() == 0 || pkt->is_fec()) {
+		return;
 	}
 
-	/* Null/PAD packets or FEC packets - no need to process */
-	if (pkt->address() == 0 || pkt->is_fec())
+	/* Initialization - we drop the first packet and store its sequence and continuity */
+	if (seq_last == 0) {
+		continuity_last=pkt->continuity();
+		seq_last=pkt->seq();
+
+#ifdef DEBUG_PKTDEDUPE
+		std::cout << "packetDeduplicate: Dropping packet " << pkt->seq() << " init seq_last 0" << std::endl;
+#endif
+
 		return;
+	}
 
 	/*
 	 * Only packets this Service Component is initialized for - continuity counter
 	 * is per address so we need to drop others here.
+	 *
+	 * FIXME - Packet address may be broken and fixed by FEC
 	 */
-	if (pkt->address() != m_packetAddress)
+	if (pkt->address() != m_packetAddress) {
+#ifdef DEBUG_PKTDEDUPE
+		std::cout << "packetDeduplicate: Dropping packet " << pkt->seq() << " not adddress " << std::endl;
 		return;
+#endif
+	}
 
 	if (plugged) {
+		/* We wait for FEC packets */
+		if (!pkt->fec_handled()) {
+#ifdef DEBUG_PKTDEDUPE
+			std::cout << "packetDeduplicate: Dropping packet " << pkt->seq()
+				<< " plugged and non FEC"
+				<< std::endl;
+#endif
+			return;
+		}
+
 		/*
 		 * FIXME - What happens when FEC is zapped because of uncorrectables?
 		 * We will possibly not see the same seq again
 		 * FIXME - What happens on sequence number wrap
 		 */
-		if (pkt->seq() <= seq_last)
+		if (pkt->seq() <= seq_last) {
+#ifdef DEBUG_PKTDEDUPE
+			std::cout << "packetDeduplicate: Dropping packet " << pkt->seq()
+				<< " plugged, non fec and newer packet "
+				<< std::endl;
+#endif
 			return;
+		}
+
+#ifdef DEBUG_PKTDEDUPE
+		std::cout << "packetDeduplicate: Packet " << pkt->seq()
+			<< " forward - unplugged"
+			<< std::endl;
+#endif
 
 		/* The packet came again after the FEC */
 		frameAggregate(pkt);
@@ -149,12 +195,23 @@ void DabServiceComponentMscPacketData::packetDeduplicate(std::shared_ptr<DabData
 
 	/* We have already send packets up to this - so we can "skip" aka drop them */
 	if (pkt->seq() <= seq_last) {
+#ifdef DEBUG_PKTDEDUPE
+		std::cout << "packetDeduplicate: Dropping packet " << pkt->seq()
+			<< " old packet "
+			<< " < " << seq_last
+			<< std::endl;
+#endif
 		return;
 	}
 
 	if (pkt->fec_handled() ||
 		(pkt->crc_correct() && pkt->continuity() == ((continuity_last+1)&0x3))) {
 
+#ifdef DEBUG_PKTDEDUPE
+		std::cout << "packetDeduplicate: Packet " << pkt->seq()
+			<< " forward - ok or post-fec"
+			<< std::endl;
+#endif
 		frameAggregate(pkt);
 
 		continuity_last=pkt->continuity();
@@ -163,8 +220,15 @@ void DabServiceComponentMscPacketData::packetDeduplicate(std::shared_ptr<DabData
 		return;
 	}
 
-	seq_last=pkt->seq();
+	//seq_last=pkt->seq();
 	plugged=true;
+
+#ifdef DEBUG_PKTDEDUPE
+	std::cout << "packetDeduplicate: Dropping packet " << pkt->seq()
+		<< " plugging " << std::endl
+		<< *pkt
+		<< std::endl;
+#endif
 
 	return;
 }
@@ -175,7 +239,8 @@ void DabServiceComponentMscPacketData::packetInput(std::shared_ptr<DabDataPkt> p
 	 * hannel - just try frame aggregation
 	 */
 	if (!m_fecSchemeAplied) {
-		frameAggregate(pkt);
+		if (!pkt->is_fec() && !pkt->is_padding())
+			frameAggregate(pkt);
 		return;
 	}
 
@@ -188,10 +253,13 @@ void DabServiceComponentMscPacketData::packetInput(std::shared_ptr<DabDataPkt> p
 	 * packet stream afterwards so packets will be only forwarded
 	 * once.
 	 */
-	packetDeduplicate(pkt);
+	if (!pkt->is_fec() && !pkt->is_padding())
+		packetDeduplicate(pkt);
+
 	if (fec.packetInput(pkt)) {
 		for(auto &pkt : fec) {
-			packetDeduplicate(pkt);
+			if (!pkt->is_fec() && !pkt->is_padding())
+				packetDeduplicate(pkt);
 		}
 		fec.packetsClear();
 	}
@@ -243,6 +311,14 @@ void DabServiceComponentMscPacketData::packetSynchronize(const std::vector<uint8
 		 * Create a DabDataPkt and add a sequence no. The sequence number is needed
 		 * for post FEC pipelines to do packet deduplication easily
 		 */
+#ifdef DEBUG_PKTSYNC
+		std::cout << "packetSynchronize: Packet seq " << m_seqno
+			<< " len " << len
+			<< " buffer.size " << m_unsyncDataBuffer.size()
+			<< std::endl;
+#endif
+
+		/* FIXME Optimization - we could only move the left over bytes and not after every packet */
 		packetInput(std::make_shared<DabDataPkt>(DabDataPkt(m_seqno++, m_unsyncDataBuffer, len)));
 
 		/* Remove packet from the begin of vector */
