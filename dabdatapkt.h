@@ -35,6 +35,11 @@
  */
 #define pktusefuldatalen(x)   (x[2] & 0x7f)
 
+/*
+ * EN 300 401 - 5.3.2.0 - Packet length
+ */
+#define pktlength(x)   (((((x)[0] >> 6)&0x3)+1)*24)
+
 
 class DabDataPkt {
 	private:
@@ -45,7 +50,8 @@ class DabDataPkt {
 		int			seqno;
 	public:
 		DabDataPkt(int seqno, const std::vector<uint8_t> &data, int len);
-		inline std::size_t size(void ) {
+
+		inline std::size_t size(void ) const {
 			return buffer.size();
 		}
 
@@ -61,15 +67,15 @@ class DabDataPkt {
 			fechandled=state;
 		}
 
-		inline bool fec_handled(void ) {
+		inline bool fec_handled(void ) const {
 			return fechandled;
 		}
 
-		inline uint8_t fec_bytes(void ) {
+		inline uint8_t fec_bytes(void ) const {
 			return fecbytes;
 		}
 
-		inline int seq(void ) {
+		inline int seq(void ) const {
 			return seqno;
 		}
 
@@ -81,39 +87,43 @@ class DabDataPkt {
 		 * EN 300 401 - 5.3.5.2 - FEC for MSC packet Mod
 		 * Address: this 10-bit field shall take the binary value "1111111110" (1 022).
 		 */
-		inline bool is_fec(void ) {
+		inline bool is_fec(void ) const {
 			return (pktaddress(buffer.data()) == 0x3fe);
 		};
 
-		inline uint16_t address(void ) {
+		inline bool is_padding(void ) const {
+			return (pktaddress(buffer.data()) == 0);
+		};
+
+		inline uint16_t address(void ) const {
 			return pktaddress(buffer.data());
 		}
 
-		inline bool is_empty(void ) {
-			return (pktaddress(buffer.data()) == 0);
+		inline uint8_t	continuity(void ) const {
+			return pktcontinuity(buffer.data());
 		}
 
-		inline uint8_t	continuity(void ) {
-			return pktcontinuity(buffer.data());
+		inline uint8_t length(void ) const {
+			return pktlength(buffer.data());
 		}
 
 		inline uint8_t data_len(void ) {
 			return pktusefuldatalen(buffer.data());
 		}
 
-		inline uint8_t	frame_firstlast(void ) {
+		inline uint8_t	frame_firstlast(void ) const {
 			return pktfirstlast(buffer.data());
 		}
 
-		inline uint8_t frame_first(void ) {
+		inline bool frame_first(void ) const {
 			return pktfirstlast(buffer.data()) == 0x2;
 		}
 
-		inline uint8_t frame_oneandonly(void ) {
+		inline bool frame_oneandonly(void ) const {
 			return pktfirstlast(buffer.data()) == 0x3;
 		}
 
-		inline uint8_t frame_last(void ) {
+		inline bool frame_last(void ) const {
 			return pktfirstlast(buffer.data()) == 0x1;
 		}
 
@@ -121,7 +131,7 @@ class DabDataPkt {
 			return pktcounter(buffer.data());
 		};
 
-		inline bool crc_correct(void ) {
+		inline bool crc_correct(void ) const {
 			return CRC_CCITT_CHECK(buffer.data(), buffer.size());
 		}
 
