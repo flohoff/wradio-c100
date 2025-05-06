@@ -33,6 +33,12 @@ bool DabDataFec::packetsProcessFec(void ) {
 	for (auto &pkt : pkts) {
 		uint8_t	*pbuf=pkt->data();
 
+#ifdef DEBUG_FEC
+		std::cout << "packetsProcessFec: Adding packet " << pkt->seq()
+			<< " fec " << std::boolalpha << pkt->is_fec()
+			<< std::endl;
+#endif
+
 		if (pkt->is_fec()) {
 			/*
 			 * FEC packets (should be 9 in our buffer)
@@ -52,22 +58,6 @@ bool DabDataFec::packetsProcessFec(void ) {
 
 			/* Data packet - interleave into columns */
 			for(size_t i=0;i<pkt->size();i++) {
-#if 0
-				std::cout << "rstable rows " << FEC_ROWS
-					<< " columns " << FEC_DATA_COLUMNS+FEC_COLUMNS
-					<< " pbuf " << std::hex << (long int) pbuf << std::dec
-					<< " pkt->size() " << pkt->size()
-					<< " dptr " << dptr
-					<< " FEC_ROWS*(FEC_DATA_COLUMNS+FEC_COLUMNS) " << (FEC_ROWS*(FEC_DATA_COLUMNS+FEC_COLUMNS))
-					<< " sizeof(rstable) " << sizeof(rstable)
-					<< " i " << i
-					<< " dptr % FEC_ROWS " << (dptr % FEC_ROWS)
-					<< " FEC_PAD + dptr / FEC_ROWS " << (FEC_PAD + dptr / FEC_ROWS)
-					<< " offset " << (dptr % FEC_ROWS)*(FEC_DATA_COLUMNS+FEC_COLUMNS)+(FEC_PAD + dptr / FEC_ROWS)
-					<< std::endl
-					<< *pkt
-					<< std::endl;
-#endif
 				rstable[dptr % FEC_ROWS][FEC_PAD + dptr / FEC_ROWS]=pbuf[i];
 				dptr++;
 			}
@@ -77,38 +67,49 @@ bool DabDataFec::packetsProcessFec(void ) {
 	}
 
 	if (pktbytes != FEC_DATA_SIZE) {
-		std::cerr << "Unable to run FEC - did not receive all packets" << std::endl;
-		return false;
+		std::cout << "packetsProcessFec: Unable to run FEC - did not receive all packets" << std::endl;
+		/*
+		 * Our guarantee is that all packets arrive twice in the post FEC pipeline.
+		 * Once in original form, and once handled by FEC:
+		 * In case we really loose packets we may not even issue FEC but we still want
+		 * to hold up our guarantee so we we mark packets handled and signal
+		 * that packets should be sent again.
+		 */
+		for (auto &pkt : pkts) {
+			pkt->fec_handled_set(true);
+		}
+
+		return true;
 	}
 
-#ifdef RSDEBUG
-	std::cout << "FEC pkts " << pktcount
+#ifdef DEBUG_FEC
+	std::cout << "packetsProcessFec: FEC pkts " << pktcount
 		<< " bytes " << pktbytes
 		<< " FEC packets " << fecpkts << std::endl;
-	std::cout << FECHexdump(rstable, FEC_ROWS*(FEC_COLUMNS+FEC_DATA_COLUMNS)) << std::endl;
+	//std::cout << FECHexdump(rstable, FEC_ROWS*(FEC_COLUMNS+FEC_DATA_COLUMNS)) << std::endl;
 #endif
-
-
-
 	for(unsigned int r=0;r<FEC_ROWS;r++) {
 		int corr_pos[10];
 		int corr_count=decode_rs_char(rs_handle, rstable[r], corr_pos, 0);
+
+#ifdef DEBUG_FEC
+		std::cout << "packetsProcessFec: Row " << r << " " << corr_count << " errors in FEC" << std::endl;
+#endif
+
 		/*
 		 * We need to copy back to packet buffers in case of corrected bytes
 		 * As we copyied them interleaved into the rows we need to walk through
 		 * again and if it matches to the corrected position copy back the byte.
 		 *
 		 */
-#ifdef RSDEBUG
-		if (corr_count < 0) {
-			std::cerr << "Row " << r << " " << corr_count << " errors in FEC" << std::endl;
-		}
-#endif
 
 		// FIXME - Mark packets which may contain uncorrectable errors
 		for(int i=0;i<corr_count;i++) {
 			dptr=0;
 			unsigned int cpos=corr_pos[i];
+#ifdef DEBUG_FEC
+			std::cout << "packetsProcessFec: Row " << r << " correction position " << cpos << std::endl;
+#endif
 
 			for (auto &pkt : pkts) {
 				uint8_t	*pbuf=pkt->data();
@@ -116,12 +117,35 @@ bool DabDataFec::packetsProcessFec(void ) {
 				/* Data packet - interleave into columns */
 				for(size_t j=0;j<pkt->size();j++) {
 					if ((dptr % FEC_ROWS == r) && ((FEC_PAD + dptr / FEC_ROWS) == cpos)) {
-						pbuf[j]=rstable[dptr % FEC_ROWS][FEC_PAD + dptr / FEC_ROWS];
-						pkt->fec_bytes_inc();
+
+						uint8_t b=rstable[dptr % FEC_ROWS][FEC_PAD + dptr / FEC_ROWS];
+
+						if (pbuf[j] != b) {
+							pkt->fec_bytes_inc();
+#ifdef DEBUG_FEC
+							std::cout << "DabDataFec: Packet " << pkt->seq() 
+								<< " correcting byte " << j
+								<< std::endl;
+#endif
+							std::cout << "Old packet" << std::endl
+								<< *pkt
+								<< std::endl;
+
+							pbuf[j]=b;
+#ifdef DEBUG_FEC
+							std::cout << "New packet" << std::endl
+								<< *pkt
+								<< std::endl;
+#endif
+						}
 					}
 					dptr++;
 				}
 			}
+		}
+
+		for (auto &pkt : pkts) {
+			pkt->fec_handled_set(true);
 		}
 	}
 
