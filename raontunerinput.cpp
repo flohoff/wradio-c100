@@ -1200,12 +1200,10 @@ void RaonTunerInput::readFicData() {
 	std::cout << Hexdump((const void *) reFicRet.data(), reFicRet.size()) << std::endl;
 #endif
 
-	for(int i = 0; i < ((bytesTransfered - 4) / 32); i++) {
-		try {
-			dataInput(std::vector<uint8_t>(reFicRet.begin() + 4 + i * 32, reFicRet.begin() + 4 + i * 32 + 32), 0x64);
-		} catch(std::length_error& lenErr) {
-			std::cout << LOG_TAG << "Length error..." << std::endl;
-		}
+	if (bytesTransfered > 4) {
+		dataInput(std::vector<uint8_t>(reFicRet.begin()+4, reFicRet.begin()+bytesTransfered), 0x64);
+	} else {
+		std::cout << LOG_TAG << "FIC interrupt and bytesTransferred " << bytesTransfered << std::endl;
 	}
 }
 
