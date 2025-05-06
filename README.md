@@ -44,9 +44,12 @@ TODO
 ====
 
 * Reconnect/Restart/die on USB Disconnect
+* Reset on failed tuning/exzessive CRC errors
 * fic/fib parsing may get out of sync and never finds sync
 * Rare segfault in FEC code overwriting the Stack
 * Reconnect NTRIP Caster
 * Correctly parse NTRIP responses, support Authentication etc
 * Configurable settings by command line
+* Support for Audio Playback? Link libmpg123 or the like
+* Support finding the service ID by name from command line
 
