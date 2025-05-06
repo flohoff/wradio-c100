@@ -3,10 +3,31 @@
 
 void JDabPPPRTKService::dataFrameInput(std::shared_ptr<DabDataFrame> frame) {
 
-	std::cout << "Frame callback called" << std::endl
+	std::cout << "Frame callback called - adding bytes" << std::endl
 		<< *frame
 		<< std::endl;
 
+	rtcm.append(frame->userdata(), frame->usersize());
+
+	std::cout << "Total RTCM Frame buffer" << std::endl
+		<< rtcm
+		<< std::endl;
+
+	while(42) {
+		/* We lost sync - preamble not in buffer */
+		if (!rtcm.preamble()) {
+			std::cout << "Error - RTCM preamble missing " << std::endl << rtcm << std::endl;
+			rtcm.clear();
+			break;
+		}
+
+		if (!rtcm.complete())
+			break;
+
+		std::shared_ptr<RtcmFrame> sub=rtcm.firstframe();
+		std::cout << "RTCM Extracted frame" << std::endl
+			<< *sub << std::endl;
+	}
 }
 
 void JDabPPPRTKService::setLinkDabService(std::shared_ptr<DabService> linkedDabSrv) {
