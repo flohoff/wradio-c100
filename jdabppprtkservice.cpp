@@ -85,7 +85,7 @@ void JDabPPPRTKService::NTRIPServer() {
 	setsockopt(ntripsocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_read, sizeof tv_read);
 
 	char msg[]="SOURCE flo ZZ-DAB-SSRZ\r\nSource-Agent: NTRIP wradio\r\n STR: \r\n\r\n";
-	send(ntripsocket, (char*)&msg, strlen(msg), 0);
+	send(ntripsocket, (char*)&msg, strlen(msg), MSG_NOSIGNAL);
 
 	char rbuf[1024];
 	read(ntripsocket, &rbuf, sizeof(rbuf));
@@ -94,11 +94,15 @@ void JDabPPPRTKService::NTRIPServer() {
 
 	while(42) {
 		std::shared_ptr<RtcmFrame>	frame;
-		if(m_rtcmQueue.tryPop(frame, std::chrono::milliseconds(24))) {
-			std::cout << "RTCMServer frame" << std::endl << *frame << std::endl;
-
-			send(ntripsocket, frame->data(), frame->size(), 0);
+		if(!m_rtcmQueue.tryPop(frame, std::chrono::milliseconds(100))) {
+			continue;
 		}
+
+#ifdef DEBUG_NTRIPSERVER
+		std::cout << "NTRIPServer frame" << std::endl << *frame << std::endl;
+#endif
+
+		send(ntripsocket, frame->data(), frame->size(), MSG_NOSIGNAL);
 	}
 }
 
