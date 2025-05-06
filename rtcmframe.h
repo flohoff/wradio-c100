@@ -10,6 +10,10 @@
 
 #define RTCM_PREAMBLE	0xd3
 
+extern "C" {
+    #include "crc24q.h"
+}
+
 class RtcmFrame {
 	private:
 		std::vector<uint8_t>	buffer;
@@ -52,10 +56,15 @@ class RtcmFrame {
 		return first;
 	}
 
+	bool crc_valid(void ) const {
+		return crc24q_check(buffer.data(), length());
+	}
+
 	friend std::ostream& operator<<(std::ostream& out, const RtcmFrame &frame) {
 		return out
 			<< "First Frame Length " << frame.length()
 			<< " Buffer length " << frame.buffer.size()
+			<< " CRC valid " << std::boolalpha << frame.crc_valid()
 			<< std::endl
 			<< Hexdump((const void *) frame.buffer.data(), frame.buffer.size())
 			<< std::endl;

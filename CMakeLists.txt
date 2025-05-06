@@ -93,6 +93,7 @@ add_executable(wradio wradio.cpp raontunerinput.cpp dabensemble.cpp ficparser.cp
 	jdabppprtkservice.cpp
 	dabdatapkt.cpp
 	dabdatafec.cpp
+	crc24q.c
 	)
 include_directories(${LIBUSB_INCLUDE_DIRS})
 target_link_libraries(wradio ${LIBUSB_LIBRARIES})
