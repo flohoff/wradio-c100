@@ -21,6 +21,7 @@ extern "C" {
 #define FEC_PKT_BYTES		22
 #define FEC_PKT_HDR_LENGTH	2
 #define FEC_PKT_BYTES		22
+#define FEC_MAX_FEC_PKT		8
 
 class DabDataFec {
 	public:

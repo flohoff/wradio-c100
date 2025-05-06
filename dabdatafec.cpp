@@ -44,7 +44,18 @@ bool DabDataFec::packetsProcessFec(void ) {
 			 * FEC packets (should be 9 in our buffer)
 			 * Must be interleaved into columns from column 239 on
 			 */
-			int poff=pkt->fec_count()*FEC_PKT_BYTES;
+			int fec_pkt_num=pkt->fec_count();
+
+			/*
+			 * We may otherwise overflow our buffer
+			 * We have 4 bits which may, considering bit errors
+			 * be 0-15 - We only have space for 9 * 12 bytes
+			 *
+			 */
+			if (fec_pkt_num > FEC_MAX_FEC_PKT)
+				continue;
+
+			int poff=fec_pkt_num*FEC_PKT_BYTES;
 			for(int i=0;i<FEC_PKT_BYTES;i++)
 				rstable[(poff+i) % FEC_ROWS][FEC_DATA_COLUMNS + (poff+i) / FEC_ROWS]=pbuf[FEC_PKT_HDR_LENGTH+i];
 
@@ -158,7 +169,7 @@ bool DabDataFec::packetInput(std::shared_ptr<DabDataPkt> pkt) {
 	pkts.push_back(pkt);
 
 	/* We need to issue FEC if we have all 9 FEC frames (0-8) */
-	if (pkt->is_fec() && pkt->fec_count() == 8) {
+	if (pkt->is_fec() && pkt->fec_count() == FEC_MAX_FEC_PKT) {
 		/* After successful FEC push packets to consumer */
 		// FIXME Regardless of the return code - push packets to
 		// allow the assumption that WITH FEC all packets appear twice
