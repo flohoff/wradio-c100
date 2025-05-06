@@ -126,14 +126,15 @@ bool DabDataFec::packetsProcessFec(void ) {
 							std::cout << "DabDataFec: Packet " << pkt->seq() 
 								<< " correcting byte " << j
 								<< std::endl;
-#endif
-							std::cout << "Old packet" << std::endl
+
+							std::cout << "Before FEC correction" << std::endl
 								<< *pkt
 								<< std::endl;
+#endif
 
 							pbuf[j]=b;
 #ifdef DEBUG_FEC
-							std::cout << "New packet" << std::endl
+							std::cout << "After FEC correction" << std::endl
 								<< *pkt
 								<< std::endl;
 #endif
