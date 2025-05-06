@@ -38,7 +38,21 @@ class DabDataFrame {
 			return buffer.data();
 		}
 
-		bool dg_crc_correct(void ) {
+		std::size_t usersize(void ) {
+			int	lensub=4;		/* CRC + Default header */
+			if (dg_has_extension())
+				lensub+=2;
+			return buffer.size()-lensub;
+		}
+
+		uint8_t *userdata(void ) {
+			int	offset=2;		/* Header */
+			if (dg_has_extension())
+				offset+=2;
+			return buffer.data()+offset;
+		}
+
+		bool dg_crc_correct(void ) const {
 			return CRC_CCITT_CHECK(buffer.data(), buffer.size());
 		}
 
@@ -80,7 +94,8 @@ class DabDataFrame {
 		friend std::ostream& operator<<(std::ostream& out, const DabDataFrame &frame) {
 			return out
 				<< std::boolalpha
-				<< " Continuity " << (int) frame.dg_continuity()
+				<< "Continuity " << (int) frame.dg_continuity()
+				<< " CRC Correct " << frame.dg_crc_correct()
 				<< " Length " << frame.buffer.size()
 				<< " extension " << frame.dg_has_extension()
 				<< " useraccess " << frame.dg_has_useraccess()
