@@ -34,6 +34,7 @@ int main(void ) {
 	// Service ID 0xe0d210bc
 	std::shared_ptr<JDabPPPRTKService>	jdab;
 	jdab=std::make_shared<JDabPPPRTKService>(178352000, 0xFF, 0x10bc, 0xe0d210bc);
+	jdab->enableNtripServer("127.0.0.1", "2101", "flo", "flo", "ZZ-DAB-SSRZ");
 
 	tuner.startService(jdab);
 

@@ -7,6 +7,7 @@
 #include <arpa/inet.h>
 #include <string.h>
 #include <unistd.h>
+#include <string.h>
 
 void JDabPPPRTKService::dataFrameInput(std::shared_ptr<DabDataFrame> frame) {
 #ifdef DEBUG_JDABPPPRTK
@@ -34,7 +35,13 @@ void JDabPPPRTKService::dataFrameInput(std::shared_ptr<DabDataFrame> frame) {
 			break;
 
 		std::shared_ptr<RtcmFrame> sub=rtcm.firstframe();
-		m_rtcmQueue.push(sub);
+
+		if (!rtcm.preamble()) {
+
+		}
+
+		if (m_ntripServerEnabled)
+			m_ntripServer->pushRtcm(sub);
 	}
 }
 
@@ -54,62 +61,13 @@ void JDabPPPRTKService::setLinkDabService(std::shared_ptr<DabService> linkedDabS
 	}
 }
 
-void JDabPPPRTKService::NTRIPServer() {
-	ntripsocket=socket(AF_INET, SOCK_STREAM, 0);
-	sockaddr_in ntripcaster;
-
-	struct hostent* host = gethostbyname("127.0.0.1");
-
-	ntripcaster.sin_family = AF_INET;
-	ntripcaster.sin_port = htons(2101);
-	ntripcaster.sin_addr.s_addr =
-		inet_addr(inet_ntoa(*(struct in_addr*)*host->h_addr_list));
-
-	while(42) {
-		int status = connect(ntripsocket,
-			(sockaddr*) &ntripcaster, sizeof(ntripcaster));
-
-		if (status >= 0) {
-			break;
-		}
-
-		std::cout << "Error connecting socket" << std::endl;
-		std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-	}
-
-	std::cout << "Connected" << std::endl;
-
-	struct timeval tv_read;
-	tv_read.tv_sec = 2;
-	tv_read.tv_usec = 0;
-	setsockopt(ntripsocket, SOL_SOCKET, SO_RCVTIMEO, (const char*)&tv_read, sizeof tv_read);
-
-	char msg[]="SOURCE flo ZZ-DAB-SSRZ\r\nSource-Agent: NTRIP wradio\r\n STR: \r\n\r\n";
-	send(ntripsocket, (char*)&msg, strlen(msg), MSG_NOSIGNAL);
-
-	char rbuf[1024];
-	read(ntripsocket, &rbuf, sizeof(rbuf));
-
-	std::cout << "Returned: " << rbuf << std::endl;
-
-	while(42) {
-		std::shared_ptr<RtcmFrame>	frame;
-		if(!m_rtcmQueue.tryPop(frame, std::chrono::milliseconds(100))) {
-			continue;
-		}
-
-#ifdef DEBUG_NTRIPSERVER
-		std::cout << "NTRIPServer frame" << std::endl << *frame << std::endl;
-#endif
-
-		send(ntripsocket, frame->data(), frame->size(), MSG_NOSIGNAL);
-	}
+void JDabPPPRTKService::enableNtripServer(std::string host, std::string port, std::string user, std::string passowrd, std::string mount) {
+	m_ntripServer=std::unique_ptr<ntripServer>(new ntripServer("127.0.0.1", "2101", "flo", "flo", "ZZ-DAB-SSRZ"));
+	m_ntripServerEnabled=true;
 }
 
 JDabPPPRTKService::JDabPPPRTKService(uint32_t freq, uint8_t ecc, uint16_t eid, uint32_t serviceid) :
 	JDabService(freq, ecc, eid, serviceid) {
-
-	m_rtcmServer = std::thread(&JDabPPPRTKService::NTRIPServer, this);
 }
 
 
