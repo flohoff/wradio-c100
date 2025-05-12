@@ -3,8 +3,10 @@
 
 #include <vector>
 #include <cstdint>
+#include <iostream>
 
 #include "libusb-1.0/libusb.h"
+#include "hexdump.hpp"
 
 class USB {
 	private:
@@ -70,6 +72,9 @@ class USB::Device {
 	int bulk_write(int endpoint, std::vector<uint8_t> &buffer, unsigned int timeout) {
 		int transferred;
 		int r=libusb_bulk_transfer(handle, endpoint, buffer.data(), buffer.size(), &transferred, timeout*10);
+#ifdef DEBUG_USB
+		std::cout << "USB::bulk_write" << std::endl << Hexdump(buffer.data(), buffer.size()) << std::endl;
+#endif
 		if (r)
 			return r;
 		return transferred;
@@ -81,6 +86,9 @@ class USB::Device {
 		if (r)
 			return r;
 		buffer.resize(transferred);
+#ifdef DEBUG_USB
+		std::cout << "USB::bulk_read" << std::endl << Hexdump(buffer.data(), buffer.size()) << std::endl;
+#endif
 		return transferred;
 	}
 };
