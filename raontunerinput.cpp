@@ -438,10 +438,10 @@ void RaonTunerInput::setRegister(uint8_t reg, uint8_t val) {
 
 uint8_t RaonTunerInput::readRegister(uint8_t reg) {
 	std::vector<uint8_t> readRegReqData{0x22, 0x00, 0x01, 0x00, reg};
-	m_usbDevice->bulk(RAON_ENDPOINT_OUT, readRegReqData, 100);
+	m_usbDevice->bulk_write(RAON_ENDPOINT_OUT, readRegReqData, 100);
 
 	std::vector<uint8_t> readBuffer(5);
-	m_usbDevice->bulk(RAON_ENDPOINT_IN, readBuffer, 100);
+	m_usbDevice->bulk_read(RAON_ENDPOINT_IN, readBuffer, 100);
 
 	return readBuffer[4];
 }
